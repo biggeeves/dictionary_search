@@ -1,0 +1,239 @@
+<form name="dataDictionarySearch" class="form">
+    <fieldset>
+        <div class="form-group row">
+            <label for="searchString" class="col-sm-2 col-form-label font-weight-bolder">Search for:</label>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" id="searchString" name="searchString"
+                       onkeydown="return event.key !== 'Enter';"
+                       onkeyup="findElements();">
+            </div>
+            <button type="button" onclick="findElements();" class="btn btn-defaultrc">Search</button>
+        </div>
+    </fieldset>
+    <hr>
+    <p class="font-weight-bolder">Search within:</p>
+    <fieldset>
+        <div class="row">
+            <div class="col">
+                <div class="form-check">
+                    <input class="form-check-input" name="form_name" id="form_name" type="checkbox">
+                    <label class="form-check-label" for="form_name">Form Name</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="section_header" id="section_header" type="checkbox">
+                    <label class="form-check-label" for="section_header">Section Header</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="field_name" id="field_name" type="checkbox">
+                    <label class="form-check-label" for="field_name">Variable Name</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="field_label" id="field_label" type="checkbox"
+                           checked="checked">
+                    <label class="form-check-label" for="field_label">Variable Label</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="field_type" id="field_type" type="checkbox" checked>
+                    <label class="form-check-label" for="field_type">Variable Type</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="field_note" id="field_note" type="checkbox">
+                    <label class="form-check-label" for="field_note">Variable Note</label>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-check">
+                    <input class="form-check-input" name="select_choices_or_calculations"
+                           id="select_choices_or_calculations" type="checkbox">
+                    <label class="form-check-label" for="select_choices_or_calculations">Select Choices</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="text_validation_type_or_show_slider_number"
+                           id="text_validation_type_or_show_slider_number" type="checkbox">
+                    <label class="form-check-label"
+                           for="text_validation_type_or_show_slider_number">Validation Type</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="text_validation_min" id="text_validation_min" type="checkbox">
+                    <label class="form-check-label" for="text_validation_min">Minimum Value</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="text_validation_max" id="text_validation_max" type="checkbox">
+                    <label class="form-check-label" for="text_validation_max">Maximum Value</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="field_annotation" id="field_annotation" type="checkbox">
+                    <label class="form-check-label" for="field_annotation">Field Annotation</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="branching_logic" id="branching_logic" type="checkbox">
+                    <label class="form-check-label" for="branching_logic">Branching Logic</label>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-check">
+                    <input class="form-check-input" name="required_field" id="required_field" type="checkbox">
+                    <label class="form-check-label" for="required_field">Required</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="custom_alignment" id="custom_alignment" type="checkbox">
+                    <label class="form-check-label" for="custom_alignment">Custom Alignment</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="identifier" id="identifier" type="checkbox">
+                    <label class="form-check-label" for="identifier">Identifier</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="question_number" id="question_number" type="checkbox">
+                    <label class="form-check-label" for="question_number">Question Number</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="matrix_ranking" id="matrix_ranking" type="checkbox">
+                    <label class="form-check-label" for="matrix_ranking">Matrix Ranking</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" name="matrix_group_name" id="matrix_group_name" type="checkbox">
+                    <label class="form-check-label" for="matrix_group_name">Matrix Group</label>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+    <hr>
+    <div class="field-type-options">
+        <p class="font-weight-bolder">Include Field type(s)</p>
+        <fieldset>
+            <div class="row">
+                <div class="col">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="all_field_types" id="all_field_types"
+                               onchange="toggleFieldTypesVisibility()" checked>
+                        <label class="form-check-label" for="all_field_types">All Field Types</label>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="text" id="text">
+                        <label class="form-check-label" for="text">Text</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="notes" id="notes">
+                        <label class="form-check-label" for="notes">Notes</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="calc" id="calc">
+                        <label class="form-check-label" for="calc">Calculations</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="dropdown" id="dropdown">
+                        <label class="form-check-label" for="dropdown">Dropdowns</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="radio" id="radio">
+                        <label class="form-check-label" for="radio">Radios</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="checkbox" id="checkbox">
+                        <label class="form-check-label" for="checkbox">Checkbox</label>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="yesno" id="yesno">
+                        <label class="form-check-label" for="yesno">Yes/No</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="truefalse" id="truefalse">
+                        <label class="form-check-label" for="truefalse">True False</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="file" id="file">
+                        <label class="form-check-label" for="file">File</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="slider" id="slider">
+                        <label class="form-check-label" for="slider">Slider</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="descriptive" id="descriptive">
+                        <label class="form-check-label" for="descriptive">Descriptive</label>
+                    </div>
+                    <div class="form-check field-type">
+                        <input class="form-check-input" type="checkbox" name="sql" id="sql">
+                        <label class="form-check-label" for="sql">SQL</label>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col">
+            <p class="font-weight-bolder">Text Specificity</p>
+            <fieldset>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="fuzzy" id="partialMatch" value="1" checked>
+                    <label class="form-check-label" for="partialMatch">
+                        Partial Match
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="fuzzy" id="exactMatch" value="0">
+                    <label class="form-check-label" for="exactMatch">
+                        Exact Match
+                    </label>
+                </div>
+            </fieldset>
+        </div>
+        <div class="col">
+            <p class="font-weight-bolder">Case Sensitivity</p>
+            <fieldset>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="upperCase" id="upperCase" value="1" checked>
+                    <label class="form-check-label" for="upperCase">
+                        Convert everything to uppercase.
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="upperCase" id="exactCase" value="0">
+                    <label class="form-check-label" for="exactCase">
+                        Use Exact Case
+                    </label>
+                </div>
+            </fieldset>
+        </div>
+        <div class="col">
+            <p class="font-weight-bolder">Display results</p>
+            <fieldset>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="all_var_info" id="limitResults" value="1"
+                           checked>
+                    <label class="form-check-label" for="limitResults">
+                        Display selected only
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="all_var_info" id="allResults" value="0">
+                    <label class="form-check-label" for="allResults">
+                        Display all information that is not blank (blanks are never displayed)
+                    </label>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-6">
+            <label class="font-weight-bolder" for="instrument">Select an instrument</label>
+            <select class="custom-select" name="instrument" id="instrument" onchange="displayInstrument(this.value);">
+                <option value="any">Any</option>
+            </select>
+        </div>
+        <div class="col-6">
+            <label class="font-weight-bolder" for="fieldNames">Select a Field</label>
+            <select class="custom-select" name="fieldNames" id="fieldNames" onchange="displayField(this.value);">
+                <option value="all">All</option>
+            </select>
+        </div>
+    </div>
+</form>
+<!-- todo display an area where a single form or variable could be shown -->

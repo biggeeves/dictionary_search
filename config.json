@@ -1,0 +1,42 @@
+{
+  "name": "DataDictionarySearch",
+  "namespace": "DCC\\DataDictionarySearch",
+  "description": "Search the Data Dictionary",
+  "documentation": "README.md",
+  "authors": [
+    {
+      "name": "Greg Neils",
+      "email": "gn2003@cumc.columbia.edu",
+      "institution": "Columbia University "
+    }
+  ],
+  "permissions": [
+    "redcap_project_home_page"
+  ],
+  "enable-every-page-hooks-on-system-pages": false,
+  "links": {
+    "project": [
+      {
+        "name": "Search Data Dictionary",
+        "icon": "gear",
+        "url": "index.php"
+      }
+    ],
+    "control-center": [
+    ]
+  },
+  "no-auth-pages": [
+  ],
+  "project-settings": [
+  ],
+  "system-settings": [
+  ],
+  "crons": [
+  ],
+  "compatibility": {
+    "php-version-min": "",
+    "php-version-max": "",
+    "redcap-version-min": "",
+    "redcap-version-max": ""
+  }
+}
