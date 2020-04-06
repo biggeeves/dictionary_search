@@ -1,5 +1,5 @@
 /*global
-dictionary, durl
+dictionary, durl, $
 */
 /*jslint devel: true */
 
@@ -8,29 +8,28 @@ dictionary, durl
 console.log("initialized");
 /*
 * TODO:  multiple selections to be searched.
-*  ignore upper and lower case
 *  parse out value labels
-*  properly escape output (looking for double qoutes).
+*  properly escape output (looking for double quotes).
 *
 * */
 
-var resDiv = document.getElementById("results");
-var feedbackDiv = document.getElementById("feedback");
-var fuzzy;
-var upperCase;
-var searchText;
-var limitToSelection;
-var fieldValues;
+const resDiv = document.getElementById("results");
+const feedbackDiv = document.getElementById("feedback");
+let fuzzy;
+let upperCase;
+let searchText;
+let limitToSelection;
+let fieldValues;
 fieldValues = {};
-var searchFields = [];
-var searchFieldTypes = [];
-var results;
+let searchFields = [];
+let searchFieldTypes = [];
+let results;
 
-var instruments = [];
+let instruments = [];
 getFormNames();
 addFormNamesToSelect();
 
-var fieldNames = [];
+let fieldNames = [];
 getFieldNames();
 addAllFieldNamesToSelect();
 
@@ -56,8 +55,8 @@ const dictionaryFields = [
 ];
 
 const redcap_field_types = [
-    "notes",
     "text",
+    "notes",
     "calc",
     "dropdown",
     "radio",
@@ -75,33 +74,31 @@ const redcap_field_types = [
 function matchCriteria(dictionaryRow) {
     let fieldValue;
     let meetsCriteria = false;
-    let DictionaryRowValues = Object.values(dictionaryRow);
+    const DictionaryRowValues = Object.values(dictionaryRow);
 
-    var filteredDictionaryRowValues = DictionaryRowValues.filter(function (el) {
+    const filteredDictionaryRowValues = DictionaryRowValues.filter(function (el) {
         return el !== "";
     });
 
     for (let property of searchFields) {
         if (!filteredDictionaryRowValues.some(r => searchFieldTypes.indexOf(r) >= 0)) {
-            // console.log("Has Property:" + property);
-        } else {
-            // console.log("skipping: " +  property);
+            console.log("skipping: " + property);
             continue;
+        } else {
+            console.log("Has Property:" + property);
         }
-        let valueOFField = dictionaryRow[property].valueOf();
-
+        let valueOfField = dictionaryRow[property].valueOf();
+        console.log(valueOfField);
 
 // How to check for missingness
-        if (valueOFField) {
-            // console.log("Value of Field: " + valueOFField);
-        } else {
+        if (valueOfField === "") {
             continue;
         }
 
         if (upperCase === 1) {
-            fieldValue = valueOFField.toUpperCase();
+            fieldValue = valueOfField.toUpperCase();
         } else {
-            fieldValue = valueOFField;
+            fieldValue = valueOfField;
         }
 
         if (fuzzy === 0) {
@@ -122,9 +119,9 @@ function findElements() {
     console.clear();
     console.log("hello");
     searchText = document.getElementById("searchString").value.trim();
-    fuzzy = Number(document.querySelector('input[name="fuzzy"]:checked').value);
-    upperCase = Number(document.querySelector('input[name="upperCase"]:checked').value);
-    limitToSelection = Number(document.querySelector('input[name="all_var_info"]:checked').value);
+    fuzzy = Number(document.querySelector("input[name=\"fuzzy\"]:checked").value);
+    upperCase = Number(document.querySelector("input[name=\"upperCase\"]:checked").value);
+    limitToSelection = Number(document.querySelector("input[name=\"all_var_info\"]:checked").value);
     resDiv.innerHTML = "";
 
     // todo see if PHP and JavaScript can share the same Dictionary Field Meta Data
@@ -176,6 +173,7 @@ function findElements() {
     }
 
     if (selectedFieldTypes !== true) {
+        document.getElementById("all_field_types").checked = true;
         searchFieldTypes = ["all_field_types"];
     }
     console.log(searchFieldTypes);
@@ -184,7 +182,7 @@ function findElements() {
         searchText = searchText.toUpperCase();
     }
 
-    console.log("searchText =" + searchText);
+    console.log("searchText=" + searchText);
     console.log("upper=" + upperCase);
     console.log("fuzzy=" + fuzzy);
     console.log("limit to selection=" + limitToSelection);
@@ -240,9 +238,9 @@ function displaySingleField(item) {
 
 function toggleFieldTypesVisibility() {
     if (document.getElementById("all_field_types").checked) {
-        $('.field-type').hide('slow');
+        $(".field-type").hide("slow");
     } else {
-        $('.field-type').show('slow');
+        $(".field-type").show("slow");
     }
 
 }
@@ -283,7 +281,7 @@ function addAllFieldNamesToSelect() {
 }
 
 function removeFieldNames() {
-    var options = document.querySelectorAll('#fieldNames option');
+    const options = document.querySelectorAll("#fieldNames option");
     options.forEach(o => o.remove());
 }
 
@@ -313,11 +311,7 @@ function displayInstrument(instrumentName) {
     results = "";
     dictionary.forEach(function (field) {
         if (field.form_name === instrumentName) {
-            results += "<ul style=\"list-style-type:none;\">";
-            for (let propertyX in field) {
-                results += "<li><strong>" + propertyX + "</strong>: " + field[propertyX] + "</li>";
-            }
-            results += "</ul>";
+            results += getFieldMetaForDisplay(field.field_name);
             results += "<hr>";
         }
     });
@@ -325,21 +319,45 @@ function displayInstrument(instrumentName) {
     addFieldNamesToSelectByFormName(instrumentName);
 }
 
-function displayField(fieldName) {
+function getFieldMetaForDisplay(fieldName) {
     results = "<ul style=\"list-style-type:none;\">";
     dictionary.forEach(function (field) {
         if (field.field_name === fieldName || fieldName === "all") {
-            for (let propertyX in field) {
+            for (const property in field) {
+                if (field.hasOwnProperty(property)) {
+                    if (field[property] !== "") {
+                        results += "<li>" +
+                            "<strong>" + property.replace("_", " ") + "</strong>: " +
+                            field[property] + "</li>";
+                    }
+                }
+            }
+        }
+    });
+    results += "</ul>";
+    return results;
+}
+
+function displayField(fieldName) {
+    resDiv.innerHTML = getFieldMetaForDisplay(fieldName);
+}
+
+/*function displayField(fieldName) {
+    results = "<ul style=\"list-style-type:none;\">";
+    dictionary.forEach(function (field) {
+        if (field.field_name === fieldName || fieldName === "all") {
+            field.forEach(function (propertyX) {
                 results += "<li>" +
                     "<strong>" + propertyX.replace("_", " ") + "</strong>: " +
                     field[propertyX] + "</li>";
-            }
+
+            });
             results += "<hr>";
         }
     });
     results += "</ul>";
     resDiv.innerHTML = results;
-}
+}*/
 
 
 // TODO use the hasOwnProperty to make sure we just show the good stuff.

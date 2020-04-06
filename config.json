@@ -17,7 +17,7 @@
   "links": {
     "project": [
       {
-        "name": "Data Dictionary Search",
+        "name": "Dictionary Search",
         "icon": "database_table",
         "url": "index.php"
       }
