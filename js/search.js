@@ -5,7 +5,6 @@ dictionary, durl, $
 
 /*jshint esversion: 6 */
 'use strict';
-console.log("initialized");
 /*
 * TODO:  multiple selections to be searched.
 *  parse out value labels
@@ -70,7 +69,6 @@ const redcap_field_types = [
     "sql"
 ];
 
-// todo bug introduced when "field type was broken out" with a specify all.
 function matchCriteria(dictionaryRow) {
     let fieldValue;
     let meetsCriteria = false;
@@ -82,19 +80,17 @@ function matchCriteria(dictionaryRow) {
 
     for (let property of searchFields) {
         if (!filteredDictionaryRowValues.some(r => searchFieldTypes.indexOf(r) >= 0)) {
-            console.log("skipping: " + property);
             continue;
         } else {
-            console.log("Has Property:" + property);
         }
         let valueOfField = dictionaryRow[property].valueOf();
-        console.log(valueOfField);
 
-// How to check for missingness
+// todo How to check for missingness??
         if (valueOfField === "") {
             continue;
         }
 
+// todo how to uppercase every field value (not key) in object?
         if (upperCase === 1) {
             fieldValue = valueOfField.toUpperCase();
         } else {
@@ -116,21 +112,18 @@ function matchCriteria(dictionaryRow) {
 }
 
 function findElements() {
-    console.clear();
-    console.log("hello");
+    debugDictionarySearch();
     searchText = document.getElementById("searchString").value.trim();
     fuzzy = Number(document.querySelector("input[name=\"fuzzy\"]:checked").value);
     upperCase = Number(document.querySelector("input[name=\"upperCase\"]:checked").value);
     limitToSelection = Number(document.querySelector("input[name=\"all_var_info\"]:checked").value);
     resDiv.innerHTML = "";
 
-    // todo see if PHP and JavaScript can share the same Dictionary Field Meta Data
-
     searchFields = [];
     searchFieldTypes = [];
 
     let selectedFields = false;
-    dictionaryFields.forEach(function (item, index) {
+    dictionaryFields.forEach(function (item) {
         fieldValues[item] = false;
         let element = document.getElementById(item);
         if (typeof (element) !== "undefined" && element !== null) {
@@ -142,14 +135,13 @@ function findElements() {
         }
     });
 
-    // todo make sure that all is the overriding and only one if all and multiples are selected.
     let selectedFieldTypes = false;
 
     if (document.getElementById("all_field_types").checked) {
         searchFieldTypes = redcap_field_types;
         selectedFieldTypes = true;
     } else {
-        redcap_field_types.forEach(function (item, index) {
+        redcap_field_types.forEach(function (item) {
             fieldValues[item] = false;
             let element = document.getElementById(item);
             if (typeof (element) !== "undefined" && element !== null) {
@@ -176,16 +168,10 @@ function findElements() {
         document.getElementById("all_field_types").checked = true;
         searchFieldTypes = ["all_field_types"];
     }
-    console.log(searchFieldTypes);
 
     if (upperCase === 1) {
         searchText = searchText.toUpperCase();
     }
-
-    console.log("searchText=" + searchText);
-    console.log("upper=" + upperCase);
-    console.log("fuzzy=" + fuzzy);
-    console.log("limit to selection=" + limitToSelection);
 
     let results = dictionary.filter(matchCriteria);
     if (Array.isArray(results) && results.length === 0) {
@@ -226,7 +212,6 @@ function displaySingleField(item) {
                 if (propertyName === "form_name") {
                     property = "<a target=\"blank\" href=\"" + durl + "&page=" + item[propertyName] + "\">" +
                         propertyName + ": " + item[propertyName] + "</a>";
-
                 }
                 singleField = singleField + property + "<br>";
             }
@@ -262,7 +247,7 @@ function getFieldNames() {
 }
 
 function addFormNamesToSelect() {
-    instruments.forEach(function (item, index) {
+    instruments.forEach(function (item) {
         let option = document.createElement("option");
         option.text = item;
         option.value = item;
@@ -272,7 +257,7 @@ function addFormNamesToSelect() {
 }
 
 function addAllFieldNamesToSelect() {
-    fieldNames.forEach(function (item, index) {
+    fieldNames.forEach(function (item) {
         let option = document.createElement("option");
         option.text = item;
         option.value = item;
@@ -287,7 +272,6 @@ function removeFieldNames() {
 
 function addFieldNamesToSelectByFormName(instrumentName) {
     removeFieldNames();
-    console.log(instrumentName);
     let all = document.createElement("option");
     all.text = "All";
     all.value = "all";
@@ -325,10 +309,25 @@ function getFieldMetaForDisplay(fieldName) {
         if (field.field_name === fieldName || fieldName === "all") {
             for (const property in field) {
                 if (field.hasOwnProperty(property)) {
-                    if (field[property] !== "") {
-                        results += "<li>" +
-                            "<strong>" + property.replace("_", " ") + "</strong>: " +
-                            field[property] + "</li>";
+                    if (field[property] === "") {
+                        continue;
+                    }
+                    results += "<li>" +
+                        "<strong>" + property.replace("_", " ") + "</strong>: ";
+                    if (property === "form_name") {
+                        results += "<a target=\"blank\" href=\"" + durl + "&page=" + field[property] + "\">";
+                    }
+                    results += field[property] + "</li>";
+                    if (property === "form_name") {
+                        results += "</a>";
+                    }
+                    if (property === "select_choices_or_calculations") {
+                        results += "<ul>";
+                        let valueLabelMap = getValuesAndLabels(field[property]);
+                        for (const [key, value] of valueLabelMap.entries()) {
+                            results += "<li>" + key + ": " + value + "</li>";
+                        }
+                        results += "</ul>";
                     }
                 }
             }
@@ -342,29 +341,33 @@ function displayField(fieldName) {
     resDiv.innerHTML = getFieldMetaForDisplay(fieldName);
 }
 
-/*function displayField(fieldName) {
-    results = "<ul style=\"list-style-type:none;\">";
-    dictionary.forEach(function (field) {
-        if (field.field_name === fieldName || fieldName === "all") {
-            field.forEach(function (propertyX) {
-                results += "<li>" +
-                    "<strong>" + propertyX.replace("_", " ") + "</strong>: " +
-                    field[propertyX] + "</li>";
+function debugDictionarySearch() {
+    console.clear();
+    console.log("searchText=" + searchText);
+    console.log("upper=" + upperCase);
+    console.log("fuzzy=" + fuzzy);
+    console.log("limit to selection=" + limitToSelection);
+    setAllFieldTypes();
+}
 
-            });
-            results += "<hr>";
-        }
-    });
-    results += "</ul>";
-    resDiv.innerHTML = results;
-}*/
+function setAllFieldTypes() {
+    let oneIsChecked = redcap_field_types.some(isAnyFieldTypeSpecified);
+    document.getElementById("all_field_types").checked = oneIsChecked ? false : true;
 
+}
 
-// TODO use the hasOwnProperty to make sure we just show the good stuff.
-// todo add style to capitalize the fields in a generic select.
-// for (var prop in obj) {
-//    if (obj.hasOwnProperty(prop)) {
-//        // or if (Object.prototype.hasOwnProperty.call(obj,prop)) for safety...
-//        console.log("prop: " + prop + " value: " + obj[prop])
-//    }
-//}
+function isAnyFieldTypeSpecified(element) {
+    return document.getElementById(element).checked;
+}
+
+function getValuesAndLabels(str) {
+    let vallabs = str.split("|");
+    let valuesAndLabels = new Map();
+    for (let i = 0; i < vallabs.length; i++) {
+        let commaLoc = vallabs[i].indexOf(",");
+        let val = vallabs[i].substring(0, commaLoc).trim();
+        let lab = vallabs[i].substring(commaLoc + 1).trim();
+        valuesAndLabels.set(val, lab);
+    }
+    return valuesAndLabels;
+}
