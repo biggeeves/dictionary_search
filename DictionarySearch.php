@@ -11,7 +11,6 @@ class DictionarySearch extends AbstractExternalModule
 
     /**
      * @var integer
-     * @value 14
      */
     private $pid;
 
