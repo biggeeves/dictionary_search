@@ -1,6 +1,6 @@
 {
-  "name": "DataDictionarySearch",
-  "namespace": "DCC\\DataDictionarySearch",
+  "name": "DictionarySearch",
+  "namespace": "DCC\\DictionarySearch",
   "description": "Search the Data Dictionary",
   "documentation": "README.md",
   "authors": [
