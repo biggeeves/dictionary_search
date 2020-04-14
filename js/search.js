@@ -66,44 +66,36 @@ dSearch.initialize = function () {
     dSearch.addFormNamesToSelect();
     dSearch.addAllFieldNamesToSelect();
 
-// var dictionaryUC = dictionary.map(dSearch.toUpper);
+    dSearch.dictionaryUC = dictionary.map(dSearch.toUpper);
 };
 
 
 dSearch.matchCriteria = function (dictionaryRow) {
     let fieldValue;
     let meetsCriteria = false;
-    const DictionaryRowValues = Object.values(dictionaryRow);
+    const dictionaryRowValues = Object.values(dictionaryRow);
 
-    const filteredDictionaryRowValues = DictionaryRowValues.filter(function (el) {
+    /*
+     remove empty values from being cycled through later.
+    */
+    const filteredDictionaryRowValues = dictionaryRowValues.filter(function (el) {
         return el !== "";
     });
 
     for (let property of dSearch.searchFields) {
-        if (!filteredDictionaryRowValues.some(r => dSearch.searchFieldTypes.indexOf(r) >= 0)) {
-            continue;
-        } else {
-        }
+
         let valueOfField = dictionaryRow[property].valueOf();
 
-// todo How to check for missingness??
-        if (valueOfField === "") {
-            continue;
-        }
-
-// todo how to uppercase every field value (not key) in object?
         if (dSearch.upperCase === 1) {
-            fieldValue = valueOfField.toUpperCase();
-        } else {
-            fieldValue = valueOfField;
+            valueOfField = valueOfField.toUpperCase();
         }
 
         if (dSearch.fuzzy === 0) {
-            if (fieldValue === dSearch.searchText) {
+            if (valueOfField === dSearch.searchText) {
                 meetsCriteria = true;
             }
         } else {
-            if (fieldValue.includes(dSearch.searchText)) {
+            if (valueOfField.includes(dSearch.searchText)) {
                 meetsCriteria = true;
             }
         }
@@ -116,80 +108,51 @@ dSearch.findElements = function () {
     dSearch.setAllFieldTypes();
     dSearch.debugDictionarySearch();
     dSearch.resultsDiv.innerHTML = "";
+    dSearch.feedbackDiv.innerHTML = "";
 
     dSearch.fuzzy = Number(document.querySelector("input[name=\"fuzzy\"]:checked").value);
     dSearch.upperCase = Number(document.querySelector("input[name=\"upperCase\"]:checked").value);
     dSearch.searchText = document.getElementById("searchString").value.trim();
     dSearch.limitToSelection = Number(document.querySelector("input[name=\"all_var_info\"]:checked").value);
 
-    dSearch.searchFields = [];
-    dSearch.searchFieldTypes = [];
-
-    let selectedFields = false;
-    dSearch.dictionaryFields.forEach(function (item) {
-        dSearch.fieldValues[item] = false;
-        let element = document.getElementById(item);
-        if (typeof (element) !== "undefined" && element !== null) {
-            dSearch.fieldValues[item] = element.checked;
-            if (dSearch.fieldValues[item] === true) {
-                selectedFields = true;
-                dSearch.searchFields.push(item);
-            }
-        }
-    });
-
-    let selectedFieldTypes = false;
-
-    if (document.getElementById("all_field_types").checked) {
-        dSearch.searchFieldTypes = dSearch.redcap_field_types;
-        selectedFieldTypes = true;
-    } else {
-        dSearch.redcap_field_types.forEach(function (item) {
-            dSearch.fieldValues[item] = false;
-            let element = document.getElementById(item);
-            if (typeof (element) !== "undefined" && element !== null) {
-                dSearch.fieldValues[item] = element.checked;
-                if (dSearch.fieldValues[item] === true) {
-                    selectedFieldTypes = true;
-                    dSearch.searchFieldTypes.push(item);
-                }
-            }
-        });
-    }
-
-
-    if (selectedFields !== true) {
-        dSearch.feedbackDiv.innerHTML = "Select a category to search";
-        return;
-    }
     if (dSearch.searchText.length < 1) {
         dSearch.feedbackDiv.innerHTML = "What are you searching for?";
         return;
     }
 
-    if (selectedFieldTypes !== true) {
-        document.getElementById("all_field_types").checked = true;
-        dSearch.searchFieldTypes = ["all_field_types"];
+    /*
+    Limit the number for fields searched to just the user selected fields.
+     */
+    dSearch.setSelectedFields();
+    if (!Array.isArray(dSearch.searchFields) || !dSearch.searchFields.length) {
+        dSearch.feedbackDiv.innerHTML = "Select a category to search";
+        return;
     }
+
+    /*
+    Limit the number for fields types  to just the selected fields..
+     */
+    dSearch.setSearchFieldTypes();
 
     if (dSearch.upperCase === 1) {
         dSearch.searchText = dSearch.searchText.toUpperCase();
     }
 
     dSearch.results = dictionary.filter(dSearch.matchCriteria);
+
     if (Array.isArray(dSearch.results) && dSearch.results.length === 0) {
-        dSearch.resultsDiv.innerHTML = "That was not found";
+        dSearch.resultsDiv.innerHTML = "The dictionary was searched and nothing was found.";
     } else {
-        dSearch.showResults(dSearch.results);
+        dSearch.showResults();
     }
 };
 
-dSearch.showResults = function (yy) {
-    dSearch.results = "<div>";
-    yy.forEach(dSearch.displaySingleField);
-    dSearch.results += "</div>";
+dSearch.showResults = function () {
+    dSearch.resultsDisplay = "<div>";
+    dSearch.results.forEach(dSearch.displaySingleField);
+    dSearch.resultsDisplay += "</div>";
     dSearch.feedbackDiv.innerHTML = "Results";
-    dSearch.resultsDiv.innerHTML = dSearch.results;
+    dSearch.resultsDiv.innerHTML = dSearch.resultsDisplay;
 };
 
 dSearch.displaySingleField = function (item) {
@@ -223,12 +186,12 @@ dSearch.displaySingleField = function (item) {
         }
     }
 
-    dSearch.results += "<div style='border:1px solid grey;padding:20px;'>" + singleField + "</div>";
+    dSearch.resultsDisplay += "<div style='border:1px solid grey;padding:20px;'>" + singleField + "</div>";
 };
 
 dSearch.toggleFieldTypesVisibility = function () {
     if (document.getElementById("all_field_types").checked) {
-        $(".field-type").hide("slow");
+        $(".field-type").hide("medium");
     } else {
         $(".field-type").show("slow");
     }
@@ -236,19 +199,19 @@ dSearch.toggleFieldTypesVisibility = function () {
 };
 
 dSearch.getFormNames = function () {
-    let tempForms = [];
+    let forms = [];
     dictionary.forEach(function (field) {
-        tempForms.push(field.form_name);
+        forms.push(field.form_name);
     });
-    return dSearch.removeDuplicates(tempForms);
+    return dSearch.removeDuplicates(forms);
 };
 
 dSearch.getFieldNames = function () {
-    let tempFields = [];
+    let fields = [];
     dictionary.forEach(function (field) {
-        tempFields.push(field.field_name);
+        fields.push(field.field_name);
     });
-    return dSearch.removeDuplicates(tempFields);
+    return dSearch.removeDuplicates(fields);
 };
 
 dSearch.addFormNamesToSelect = function () {
@@ -271,21 +234,23 @@ dSearch.addAllFieldNamesToSelect = function () {
 
 dSearch.removeFieldNames = function () {
     const options = document.querySelectorAll("#fieldNames option");
-    options.forEach(o => o.remove());
+    options.forEach(option => option.remove());
 };
 
 dSearch.addFieldNamesToSelectByFormName = function (instrumentName) {
     dSearch.removeFieldNames();
-    let all = document.createElement("option");
-    all.text = "All";
-    all.value = "all";
-    document.getElementById("fieldNames").add(all);
+
+    let optionAll = document.createElement("option");
+    optionAll.text = "All";
+    optionAll.value = "all";
+    let fieldNamesSelect = document.getElementById("fieldNames")
+    fieldNamesSelect.add(optionAll);
     dictionary.forEach(function (field) {
         if (field.form_name === instrumentName || instrumentName === "any") {
             let option = document.createElement("option");
             option.text = field.field_name;
             option.value = field.field_name;
-            document.getElementById("fieldNames").add(option);
+            fieldNamesSelect.add(option);
         }
     });
 };
@@ -300,14 +265,14 @@ dSearch.removeDuplicates = function (data) {
 //  The second time to get the field info.
 
 dSearch.displayInstrument = function (instrumentName) {
-    dSearch.results = "";
+    dSearch.selectedResults = "";
     dictionary.forEach(function (field) {
         if (field.form_name === instrumentName) {
-            dSearch.results += dSearch.getFieldMetaForDisplay(field, field.field_name);
-            dSearch.results += "<hr>";
+            dSearch.selectedResults += dSearch.getFieldMetaForDisplay(field, field.field_name);
+            dSearch.selectedResults += "<hr>";
         }
     });
-    dSearch.resultsDiv.innerHTML = dSearch.results;
+    dSearch.resultsDiv.innerHTML = dSearch.selectedResults;
     dSearch.addFieldNamesToSelectByFormName(instrumentName);
 };
 
@@ -315,35 +280,35 @@ dSearch.displayInstrument = function (instrumentName) {
 //  this should not be checking to see if the fieldName matches anything.  It should be done before this step.
 
 dSearch.getFieldMetaForDisplay = function (field, fieldName) {
-    let results = "<ul style=\"list-style-type:none;\">";
+    let fieldMeta = "<ul style=\"list-style-type:none;\">";
     if (field.field_name === fieldName || fieldName === "all") {
         for (const property in field) {
             if (field.hasOwnProperty(property)) {
                 if (field[property] === "") {
                     continue;
                 }
-                results += "<li>" +
+                fieldMeta += "<li>" +
                     "<strong>" + property.replace("_", " ") + "</strong>: ";
                 if (property === "form_name") {
-                    results += "<a target=\"blank\" href=\"" + designerUrl + "&page=" + field[property] + "\">";
+                    fieldMeta += "<a target=\"blank\" href=\"" + designerUrl + "&page=" + field[property] + "\">";
                 }
-                results += field[property] + "</li>";
+                fieldMeta += field[property] + "</li>";
                 if (property === "form_name") {
-                    results += "</a>";
+                    fieldMeta += "</a>";
                 }
                 if (property === "select_choices_or_calculations") {
-                    results += "<ul>";
+                    fieldMeta += "<ul>";
                     let valueLabelMap = dSearch.getValuesAndLabels(field[property]);
                     for (const [key, value] of valueLabelMap.entries()) {
-                        results += "<li>" + key + ": " + value + "</li>";
+                        fieldMeta += "<li>" + key + ": " + value + "</li>";
                     }
-                    results += "</ul>";
+                    fieldMeta += "</ul>";
                 }
             }
         }
     }
-    results += "</ul>";
-    return results;
+    fieldMeta += "</ul>";
+    return fieldMeta;
 };
 
 // todo finish this function for displaying a single field.
@@ -366,11 +331,11 @@ dSearch.debugDictionarySearch = function () {
 };
 
 dSearch.setAllFieldTypes = function () {
-    let oneIsChecked = dSearch.redcap_field_types.some(dSearch.isAnyFieldTypeSpecified);
+    let oneIsChecked = dSearch.redcap_field_types.some(dSearch.isFieldTypeSelected);
     document.getElementById("all_field_types").checked = oneIsChecked ? false : true;
 };
 
-dSearch.isAnyFieldTypeSpecified = function (element) {
+dSearch.isFieldTypeSelected = function (element) {
     return document.getElementById(element).checked;
 };
 
@@ -387,18 +352,60 @@ dSearch.getValuesAndLabels = function (str) {
 };
 
 dSearch.onlyFieldsMatched = function (fieldName) {
+    console.log("Only Fields Matached");
     if (fieldName === "all") {
         return dictionary;
     } else {
         let results = dictionary.filter(function (field) {
             return (field.field_name === fieldName || fieldName === "all");
         });
-        console.log(results);
     }
 };
 
 dSearch.toUpper = function (item) {
-    return item.toUpperCase();
+    return item.toUpperCase;
+};
+
+/**
+ * Sets array dSearch.searchFields
+ * an empty array value is OK.
+ */
+dSearch.setSelectedFields = function () {
+    dSearch.searchFields = [];
+    dSearch.dictionaryFields.forEach(function (item) {
+        let element = document.getElementById(item);
+        if (typeof (element) !== "undefined" && element !== null) {
+            if (element.checked === true) {
+                dSearch.searchFields.push(item);
+            }
+        }
+    });
+};
+
+/**
+ * Sets array dSearch.searchFieldTypes
+ * if nothing is selected default of all_field_types is selected and used as value.
+ */
+
+dSearch.setSearchFieldTypes = function () {
+    dSearch.searchFieldTypes = [];
+    if (document.getElementById("all_field_types").checked) {
+        dSearch.searchFieldTypes = dSearch.redcap_field_types;
+    } else {
+        dSearch.redcap_field_types.forEach(function (item) {
+            let element = document.getElementById(item);
+            if (typeof (element) !== "undefined" && element !== null) {
+                if (element.checked === true) {
+                    dSearch.searchFieldTypes.push(item);
+                }
+            }
+        });
+    }
+
+    if (!dSearch.searchFields.length) {
+        document.getElementById("all_field_types").checked = true;
+        dSearch.searchFieldTypes = ["all_field_types"];
+    }
 };
 
 dSearch.initialize();

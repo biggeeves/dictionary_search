@@ -2,124 +2,127 @@
 
 namespace DCC\DictionarySearch;
 
+use Exception;
 use ExternalModules\AbstractExternalModule;
 use \REDCap as REDCap;
 use \Security as Security;
 
+/** todo
+ * Change required, custom alignment, identifier to appropriate drop downs (if needed)
+ * Check to see if someone can go to the Online Designer
+ * $allow_edit = ($user_rights['design'] && ($status == '0' || ($status == '1' && $draft_mode == '1')));
+ * // include a debug variable in the url
+ * // $debug = intval(filter_input(INPUT_GET, 'debug', FILTER_SANITIZE_SPECIAL_CHARS));
+ **/
+
+/**
+ * Class DictionarySearch
+ * @package DCC\DictionarySearch
+ */
 class DictionarySearch extends AbstractExternalModule
 {
-
-    /**
-     * @var integer
-     */
-    private $pid;
 
     /**
      * @var string[]
      */
     private $dataDictionary;
 
-
-    private $redcap_field_types;
-
     public function __construct()
     {
         parent::__construct();
     }
 
+    /**
+     * @param int $project_id Global Variable set by REDCap for Project ID.
+     */
     public function redcap_project_home_page(int $project_id)
     {
 
     }
 
-    public function initialize()
+    /**
+     *  Main action for Dictionary Search
+     *  1) Ensures a project is selected
+     *  2) Gets the JSON data dictionary
+     *  3) displays the HTML form
+     *  4) includes necessary JavaScripts.
+     */
+    public function controller()
     {
         global $project_id;
-        $this->makeREDCapFieldTypes();
-        $this->setProjectId($project_id);
-        $this->setDataDictionaryJSON();
+        if (!isset($project_id) || is_null($project_id)) {
+            echo '<h2 class="alert alert-info" style="border-color: #bee5eb !important;">Please select a project</h2>';
+            return;
+        }
+        $this->setDataDictionaryJSON($project_id);
+
+        echo $this->renderForm();
+
+        echo $this->renderScripts();
+
     }
 
-    /** todo
-     * Change required, custom alignment, identifier to appropriate drop downs (if needed)
-     * Check to see if someone can go to the Online Designer
-     * $allow_edit = ($user_rights['design'] && ($status == '0' || ($status == '1' && $draft_mode == '1')));
-     **/
-
-    public function setDataDictionaryJSON()
-    {
-        global $project_id;
-        $this->dataDictionary = REDCap::getDataDictionary($project_id, 'json');
-    }
-
-    public function getForm()
-    {
-        return file_get_contents(__DIR__ . '/html/form.html');
-    }
-
-    public function getJSUrl()
-    {
-        return $this->getUrl("js/search.js");
-    }
-
-    public function getOnlineDesignerURL()
-    {
-        global $redcap_base_url, $redcap_version, $project_id;
-        return $redcap_base_url . 'redcap_v' . $redcap_version . '/Design/online_designer.php?pid=' . $project_id;
-    }
-
-    public function resultsDiv()
-    {
-        $resultArea = '<div id="results" style="padding:25px;"></div>';
-        return $resultArea;
-    }
-
-    public function feedbackDiv()
-    {
-        $resultArea = '<div id="feedback" style="padding:25px;"></div>';
-        return $resultArea;
-    }
 
     /**
-     * @param $pid
+     * @param null $project_id
+     * @return null
+     * @throws Exception
      */
-    public function setProjectId($pid)
+    private function setDataDictionaryJSON($project_id = null)
     {
-        $this->pid = $pid;
+        if (is_null($project_id)) {
+            return null;
+        }
+        $this->dataDictionary = REDCap::getDataDictionary($project_id, 'json');
     }
 
     /**
      * @return string[]
      */
-    public function getDataDictionary()
+    private function getDataDictionary()
     {
         return $this->dataDictionary;
     }
 
 
-    public function makeREDCapFieldTypes()
+    /**
+     * The URL to the JavaScript that powers the HTML search form.
+     *
+     * @return string
+     */
+    private function getJSUrl()
     {
-        $this->redcap_field_types = [
-            "notes",
-            "text",
-            "calc",
-            "dropdown",
-            "radio",
-            "checkbox",
-            "yesno",
-            "truefalse",
-            "file",
-            "file",
-            "slider",
-            "descriptive",
-            "sql"
-        ];
+        return $this->getUrl("js/search.js");
     }
 
-    public function renderForm()
+    /**
+     * URL to the instrument in the Online Designer.
+     *
+     * @return string
+     */
+    private function getOnlineDesignerURL()
     {
-        return $this->getForm() .
-            $this->feedbackDiv() .
-            $this->resultsDiv();
+        global $redcap_base_url, $redcap_version, $project_id;
+        return $redcap_base_url . 'redcap_v' . $redcap_version . '/Design/online_designer.php?pid=' . $project_id;
+    }
+
+    /**
+     * @return string
+     */
+    private function renderForm()
+    {
+        $contents = file_get_contents(__DIR__ . '/html/form.html');
+        if ($contents === false) {
+            return 'HTML form not found';
+        }
+        return $contents;
+    }
+
+    private function renderScripts()
+    {
+        $dictionary = '<script>const dictionary = ' . $this->getDataDictionary() . ';</script>';
+        $jsUrl = '<script src="' . $this->getJSUrl() . '"></script>';
+        $designerUrl = '<script> designerUrl="' . $this->getOnlineDesignerURL() . '"</script>';
+        return $dictionary . $jsUrl . $designerUrl;
     }
 }

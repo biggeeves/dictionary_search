@@ -115,8 +115,22 @@ class dictionarySearch
     /**
      * @var string[]
      */
-    private
-        $field_annotation;
+    private $field_annotation;
+
+    private $redcap_field_types = ["notes",
+        "text",
+        "calc",
+        "dropdown",
+        "radio",
+        "checkbox",
+        "yesno",
+        "truefalse",
+        "file",
+        "file",
+        "slider",
+        "descriptive",
+        "sql"];
+
 
     public function makeDataDictionary()
     {
@@ -338,5 +352,4 @@ class dictionarySearch
     {
         return $this->fieldOptions;
     }
-
 }

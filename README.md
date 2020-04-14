@@ -1,2 +1,2 @@
-# DataDictionarySearch
+# DictionarySearch
 Search the Data Dictionary
