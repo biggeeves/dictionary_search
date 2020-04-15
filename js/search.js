@@ -6,13 +6,17 @@ dictionary, designerUrl, $
 /*jshint esversion: 6 */
 'use strict';
 /*
-* TODO:  multiple selections to be searched.
+* TODO:
 *  parse out value labels
-*  properly escape output (looking for double quotes).
+*  Does output need to be properly escaped? (looking for double quotes).
+*  Match instrument names to their longer instrument label.
+*  See if person has rights to the Online Designer, if not, disable the link.
 *
 * */
 
 var dSearch = {};
+
+dSearch.debugger = false;
 
 dSearch.initialize = function () {
     dSearch.dictionaryFields = [
@@ -63,13 +67,19 @@ dSearch.initialize = function () {
 
     dSearch.fieldValues = {};
 
-    dSearch.addFormNamesToSelect();
-    dSearch.addAllFieldNamesToSelect();
+    dSearch.addOptionsToSelect("instrument", dSearch.instruments);
+    dSearch.addOptionsToSelect("fieldNames", dSearch.fieldNames);
+//    dSearch.addAllFieldNamesToSelect();
 
     dSearch.dictionaryUC = dictionary.map(dSearch.toUpper);
 };
 
 
+/**
+ * Searches all meta data in a field (dictionary row) to find matches.
+ * @param dictionaryRow
+ * @returns {boolean}  true=matches any criteria specified.  false = does not match anything.
+ */
 dSearch.matchCriteria = function (dictionaryRow) {
     let fieldValue;
     let meetsCriteria = false;
@@ -104,9 +114,14 @@ dSearch.matchCriteria = function (dictionaryRow) {
     return meetsCriteria;
 };
 
-dSearch.findElements = function () {
+/**
+ * Main controller for search form submission.
+ */
+dSearch.submitted = function () {
     dSearch.setAllFieldTypes();
-    dSearch.debugDictionarySearch();
+    if (dSearch.debugger) {
+        dSearch.debugDictionarySearch();
+    }
     dSearch.resultsDiv.innerHTML = "";
     dSearch.feedbackDiv.innerHTML = "";
 
@@ -147,6 +162,9 @@ dSearch.findElements = function () {
     }
 };
 
+/**
+ * Render the results for submitting a search.
+ */
 dSearch.showResults = function () {
     dSearch.resultsDisplay = "<div>";
     dSearch.results.forEach(dSearch.displaySingleField);
@@ -155,6 +173,10 @@ dSearch.showResults = function () {
     dSearch.resultsDiv.innerHTML = dSearch.resultsDisplay;
 };
 
+/**
+ * Add each field meta data to resultsDisplay
+ * @param item
+ */
 dSearch.displaySingleField = function (item) {
     let singleField;
     singleField = "";
@@ -189,6 +211,9 @@ dSearch.displaySingleField = function (item) {
     dSearch.resultsDisplay += "<div style='border:1px solid grey;padding:20px;'>" + singleField + "</div>";
 };
 
+/**
+ * If all field types is checked then hide the field type categories.
+ */
 dSearch.toggleFieldTypesVisibility = function () {
     if (document.getElementById("all_field_types").checked) {
         $(".field-type").hide("medium");
@@ -198,6 +223,10 @@ dSearch.toggleFieldTypesVisibility = function () {
 
 };
 
+/**
+ * Get unique array of instrument names
+ * @returns {*[]}
+ */
 dSearch.getFormNames = function () {
     let forms = [];
     dictionary.forEach(function (field) {
@@ -206,6 +235,10 @@ dSearch.getFormNames = function () {
     return dSearch.removeDuplicates(forms);
 };
 
+/**
+ * Get unique array of field names.
+ * @returns {*[]}
+ */
 dSearch.getFieldNames = function () {
     let fields = [];
     dictionary.forEach(function (field) {
@@ -214,36 +247,40 @@ dSearch.getFieldNames = function () {
     return dSearch.removeDuplicates(fields);
 };
 
-dSearch.addFormNamesToSelect = function () {
-    dSearch.instruments.forEach(function (item) {
+/**
+ * Add array of options where both values and text are the same value to a select element.
+ * @param selectID
+ * @param options
+ */
+dSearch.addOptionsToSelect = function (selectID, options) {
+    options.forEach(function (item) {
         let option = document.createElement("option");
         option.text = item;
         option.value = item;
-        document.getElementById("instrument").add(option);
+        document.getElementById(selectID).add(option);
     });
 };
 
-dSearch.addAllFieldNamesToSelect = function () {
-    dSearch.fieldNames.forEach(function (item) {
-        let option = document.createElement("option");
-        option.text = item;
-        option.value = item;
-        document.getElementById("fieldNames").add(option);
-    });
-};
-
+/**
+ * Removes all field names from fieldNames choice
+ *
+ */
 dSearch.removeFieldNames = function () {
     const options = document.querySelectorAll("#fieldNames option");
     options.forEach(option => option.remove());
 };
 
+/**
+ * Removes all field names from fieldNames choice and adds all fields in the selected single instrument.
+ * @param instrumentName
+ */
 dSearch.addFieldNamesToSelectByFormName = function (instrumentName) {
     dSearch.removeFieldNames();
 
     let optionAll = document.createElement("option");
     optionAll.text = "All";
     optionAll.value = "all";
-    let fieldNamesSelect = document.getElementById("fieldNames")
+    let fieldNamesSelect = document.getElementById("fieldNames");
     fieldNamesSelect.add(optionAll);
     dictionary.forEach(function (field) {
         if (field.form_name === instrumentName || instrumentName === "any") {
@@ -256,6 +293,11 @@ dSearch.addFieldNamesToSelectByFormName = function (instrumentName) {
 };
 
 
+/**
+ * Remove duplicates from an array.
+ * @param data
+ * @returns {any[]}
+ */
 dSearch.removeDuplicates = function (data) {
     return [...new Set(data)];
 };
@@ -296,14 +338,14 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
                 if (property === "form_name") {
                     fieldMeta += "</a>";
                 }
-                if (property === "select_choices_or_calculations") {
-                    fieldMeta += "<ul>";
+                /*if (property === "select_choices_or_calculations") {
+                    fieldMeta += "<ul class='list-unstyled'>";
                     let valueLabelMap = dSearch.getValuesAndLabels(field[property]);
                     for (const [key, value] of valueLabelMap.entries()) {
                         fieldMeta += "<li>" + key + ": " + value + "</li>";
                     }
                     fieldMeta += "</ul>";
-                }
+                }*/
             }
         }
     }
@@ -322,6 +364,9 @@ dSearch.displayField = function (fieldName) {
     dSearch.resultsDiv.innerHTML = results;
 };
 
+/**
+ * Debug info.
+ */
 dSearch.debugDictionarySearch = function () {
     console.clear();
     console.log("searchText=" + dSearch.searchText);
@@ -330,15 +375,30 @@ dSearch.debugDictionarySearch = function () {
     console.log("limit to selection=" + dSearch.limitToSelection);
 };
 
+/**
+ *  if any field types are checked, uncheck all_field_types
+ *
+ */
 dSearch.setAllFieldTypes = function () {
     let oneIsChecked = dSearch.redcap_field_types.some(dSearch.isFieldTypeSelected);
-    document.getElementById("all_field_types").checked = oneIsChecked ? false : true;
+    document.getElementById("all_field_types").checked = !oneIsChecked;
 };
 
+
+/**
+ *
+ * @param element, Id of HTML element to see if it is checked or not
+ * @returns boolean, true=checked, False if not checked.
+ */
 dSearch.isFieldTypeSelected = function (element) {
     return document.getElementById(element).checked;
 };
 
+/**
+ *
+ * @param str
+ * @returns {Map<any, any>}
+ */
 dSearch.getValuesAndLabels = function (str) {
     let vallabs = str.split("|");
     let valuesAndLabels = new Map();
@@ -352,7 +412,7 @@ dSearch.getValuesAndLabels = function (str) {
 };
 
 dSearch.onlyFieldsMatched = function (fieldName) {
-    console.log("Only Fields Matached");
+    console.log("Only Fields Matched");
     if (fieldName === "all") {
         return dictionary;
     } else {

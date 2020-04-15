@@ -4,10 +4,9 @@
             <label for="searchString" class="col-sm-2 col-form-label font-weight-bolder">Search for:</label>
             <div class="col-sm-6">
                 <input type="text" class="form-control" id="searchString" name="searchString"
-                       onkeydown="return event.key !== 'Enter';"
-                       onkeyup="dSearch.findElements();">
+                       onkeydown="return event.key !== 'Enter';">
             </div>
-            <button type="button" onclick="dSearch.findElements();" class="btn btn-defaultrc">Search</button>
+            <button type="button" onclick="dSearch.submitted();" class="btn btn-defaultrc">Search</button>
         </div>
     </fieldset>
     <hr>
