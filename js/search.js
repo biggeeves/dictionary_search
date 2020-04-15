@@ -1,5 +1,5 @@
 /*global
-dictionary, designerUrl, $
+dictionary, designerUrl, $, dSearch
 */
 /*jslint devel: true */
 
@@ -13,8 +13,6 @@ dictionary, designerUrl, $
 *  See if person has rights to the Online Designer, if not, disable the link.
 *
 * */
-
-var dSearch = {};
 
 dSearch.debugger = false;
 
@@ -67,9 +65,8 @@ dSearch.initialize = function () {
 
     dSearch.fieldValues = {};
 
-    dSearch.addOptionsToSelect("instrument", dSearch.instruments);
+    dSearch.addMapOptionsToSelect("instrument", dSearch.instrumentNames);
     dSearch.addOptionsToSelect("fieldNames", dSearch.fieldNames);
-//    dSearch.addAllFieldNamesToSelect();
 
     dSearch.dictionaryUC = dictionary.map(dSearch.toUpper);
 };
@@ -81,7 +78,6 @@ dSearch.initialize = function () {
  * @returns {boolean}  true=matches any criteria specified.  false = does not match anything.
  */
 dSearch.matchCriteria = function (dictionaryRow) {
-    let fieldValue;
     let meetsCriteria = false;
     const dictionaryRowValues = Object.values(dictionaryRow);
 
@@ -262,6 +258,24 @@ dSearch.addOptionsToSelect = function (selectID, options) {
 };
 
 /**
+ * Add array of options where both values and text are the same value to a select element.
+ * @param selectID
+ * @param options
+ */
+dSearch.addMapOptionsToSelect = function (selectID, options) {
+    console.log("in Map");
+    options.forEach(function (long, short, i) {
+        console.log(short);
+        console.log(long);
+        console.log(i);
+        let option = document.createElement("option");
+        option.text = long;
+        option.value = short;
+        document.getElementById(selectID).add(option);
+    });
+};
+
+/**
  * Removes all field names from fieldNames choice
  *
  */
@@ -332,7 +346,7 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
                 fieldMeta += "<li>" +
                     "<strong>" + property.replace("_", " ") + "</strong>: ";
                 if (property === "form_name") {
-                    fieldMeta += "<a target=\"blank\" href=\"" + designerUrl + "&page=" + field[property] + "\">";
+                    fieldMeta += "<a target=\"blank\" href=\"" + dSearch.designerUrl + "&page=" + field[property] + "\">";
                 }
                 fieldMeta += field[property] + "</li>";
                 if (property === "form_name") {
@@ -412,7 +426,6 @@ dSearch.getValuesAndLabels = function (str) {
 };
 
 dSearch.onlyFieldsMatched = function (fieldName) {
-    console.log("Only Fields Matched");
     if (fieldName === "all") {
         return dictionary;
     } else {
@@ -469,5 +482,5 @@ dSearch.setSearchFieldTypes = function () {
 };
 
 dSearch.initialize();
-
-dSearch.onlyFieldsMatched("all");
+document.getElementById("instrument")[1].selected = true;
+dSearch.displayInstrument(document.getElementById("instrument").value);

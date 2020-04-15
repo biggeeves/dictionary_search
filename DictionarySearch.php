@@ -27,6 +27,11 @@ class DictionarySearch extends AbstractExternalModule
      */
     private $dataDictionary;
 
+    /**
+     * @var array|string
+     */
+    private $instrument_names;
+
     public function __construct()
     {
         parent::__construct();
@@ -55,6 +60,8 @@ class DictionarySearch extends AbstractExternalModule
             return;
         }
         $this->setDataDictionaryJSON($project_id);
+
+        $this->instrument_names = REDCap::getInstrumentNames();
 
         echo $this->renderForm();
 
@@ -118,11 +125,31 @@ class DictionarySearch extends AbstractExternalModule
         return $contents;
     }
 
+    private function setInstrumentsNamesJS()
+    {
+        $js = '<script>dSearch.instrumentNames = new Map();';
+        foreach ($this->instrument_names as $short => $long) {
+            $long = str_replace('"', '', $long);
+            $js .= 'dSearch.instrumentNames.set("' . $short . '", "' . $long . '");';
+        }
+        $js .= '</script>';
+        return $js;
+    }
+
     private function renderScripts()
     {
         $dictionary = '<script>const dictionary = ' . $this->getDataDictionary() . ';</script>';
         $jsUrl = '<script src="' . $this->getJSUrl() . '"></script>';
-        $designerUrl = '<script> designerUrl="' . $this->getOnlineDesignerURL() . '"</script>';
-        return $dictionary . $jsUrl . $designerUrl;
+        $designerUrl = '<script>dSearch.designerUrl="' . $this->getOnlineDesignerURL() . '";</script>';
+        return $this->dSearchJsObject() .
+            $this->setInstrumentsNamesJS() .
+            $dictionary .
+            $jsUrl .
+            $designerUrl;
+    }
+
+    private function dSearchJsObject()
+    {
+        return '<script>var dSearch = {};</script>';
     }
 }
