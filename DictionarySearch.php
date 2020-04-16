@@ -9,10 +9,7 @@ use \Security as Security;
 
 /** todo
  * Change required, custom alignment, identifier to appropriate drop downs (if needed)
- * Check to see if someone can go to the Online Designer
- * $allow_edit = ($user_rights['design'] && ($status == '0' || ($status == '1' && $draft_mode == '1')));
- * // include a debug variable in the url
- * // $debug = intval(filter_input(INPUT_GET, 'debug', FILTER_SANITIZE_SPECIAL_CHARS));
+ * dictionary is still in the global scope and needs to be moved to dSearch object.
  **/
 
 /**
@@ -62,6 +59,14 @@ class DictionarySearch extends AbstractExternalModule
         $this->setDataDictionaryJSON($project_id);
 
         $this->instrument_names = REDCap::getInstrumentNames();
+
+        $user = array_shift(REDCap::getUserRights(USERID));
+
+        if ($user['design'] == 1) {
+            $this->designRights = true;
+        } else {
+            $this->designRights = false;
+        }
 
         echo $this->renderForm();
 
@@ -141,11 +146,19 @@ class DictionarySearch extends AbstractExternalModule
         $dictionary = '<script>const dictionary = ' . $this->getDataDictionary() . ';</script>';
         $jsUrl = '<script src="' . $this->getJSUrl() . '"></script>';
         $designerUrl = '<script>dSearch.designerUrl="' . $this->getOnlineDesignerURL() . '";</script>';
+        $designRights = '<script>dSearch.designRights=';
+        if ($this->designRights) {
+            $designRights .= 'true';
+        } else {
+            $designRights .= 'false';
+        }
+        $designRights .= '</script>';
         return $this->dSearchJsObject() .
             $this->setInstrumentsNamesJS() .
             $dictionary .
             $jsUrl .
-            $designerUrl;
+            $designerUrl .
+            $designRights;
     }
 
     private function dSearchJsObject()

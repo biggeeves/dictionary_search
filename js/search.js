@@ -1,5 +1,5 @@
 /*global
-dictionary, designerUrl, $, dSearch
+dictionary, $, dSearch, designerUrl, designRights
 */
 /*jslint devel: true */
 
@@ -9,8 +9,8 @@ dictionary, designerUrl, $, dSearch
 * TODO:
 *  parse out value labels
 *  Does output need to be properly escaped? (looking for double quotes).
-*  Match instrument names to their longer instrument label.
-*  See if person has rights to the Online Designer, if not, disable the link.
+*  When searching for text all returned values are strong, when only search criteria should be
+*     strong when displaying ALL Information
 *
 * */
 
@@ -141,7 +141,7 @@ dSearch.submitted = function () {
     }
 
     /*
-    Limit the number for fields types  to just the selected fields..
+    Limit the number for fields TYPES to just the selected fields..
      */
     dSearch.setSearchFieldTypes();
 
@@ -165,7 +165,6 @@ dSearch.showResults = function () {
     dSearch.resultsDisplay = "<div>";
     dSearch.results.forEach(dSearch.displaySingleField);
     dSearch.resultsDisplay += "</div>";
-    dSearch.feedbackDiv.innerHTML = "Results";
     dSearch.resultsDiv.innerHTML = dSearch.resultsDisplay;
 };
 
@@ -174,8 +173,7 @@ dSearch.showResults = function () {
  * @param item
  */
 dSearch.displaySingleField = function (item) {
-    let singleField;
-    singleField = "";
+    let fieldMeta = "";
 
     for (let propertyName in item) {
         if (dSearch.limitToSelection === 1) {
@@ -189,22 +187,21 @@ dSearch.displaySingleField = function (item) {
 
         if (item.hasOwnProperty(propertyName)) {
             if (item[propertyName] !== "") {
-                property = propertyName + ": " +
-                    item[propertyName].replace(new RegExp(dSearch.searchText, "gi"), "<strong>" + dSearch.searchText + "</strong>");
+                let propertyValue = item[propertyName].replace(new RegExp(dSearch.searchText, "gi"), "<strong>" + dSearch.searchText + "</strong>");
+                let propertyLabel = "<strong>" + propertyName.replace("_", " ") + "</strong>";
                 if (propertyName === "field_name") {
-                    dSearch.feedbackDiv.innerHTML = "Searching: " + item[propertyName];
-                    property = "<strong>" + property + "</strong>";
+                    propertyValue = "<strong>" + propertyValue + "</strong>";
+                } else if (propertyName === "form_name" && dSearch.designRights) {
+                    propertyValue = "<a target=\"blank\" href=\"" + dSearch.designerUrl + "&page=" + item[propertyName] + "\">" +
+                        propertyValue + "</a>";
                 }
-                if (propertyName === "form_name") {
-                    property = "<a target=\"blank\" href=\"" + designerUrl + "&page=" + item[propertyName] + "\">" +
-                        propertyName + ": " + item[propertyName] + "</a>";
-                }
-                singleField = singleField + property + "<br>";
+                fieldMeta = fieldMeta + "<p>" + propertyLabel + ": " + propertyValue + "</p>";
             }
         }
     }
 
-    dSearch.resultsDisplay += "<div style='border:1px solid grey;padding:20px;'>" + singleField + "</div>";
+    dSearch.feedbackDiv.innerHTML = "";
+    dSearch.resultsDisplay += "<div style='border:1px solid grey;padding:20px;'>" + fieldMeta + "</div>";
 };
 
 /**
@@ -263,11 +260,7 @@ dSearch.addOptionsToSelect = function (selectID, options) {
  * @param options
  */
 dSearch.addMapOptionsToSelect = function (selectID, options) {
-    console.log("in Map");
     options.forEach(function (long, short, i) {
-        console.log(short);
-        console.log(long);
-        console.log(i);
         let option = document.createElement("option");
         option.text = long;
         option.value = short;
@@ -329,6 +322,10 @@ dSearch.displayInstrument = function (instrumentName) {
         }
     });
     dSearch.resultsDiv.innerHTML = dSearch.selectedResults;
+};
+
+dSearch.selectInstrument = function (instrumentName) {
+    dSearch.displayInstrument(instrumentName);
     dSearch.addFieldNamesToSelectByFormName(instrumentName);
 };
 
@@ -345,21 +342,13 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
                 }
                 fieldMeta += "<li>" +
                     "<strong>" + property.replace("_", " ") + "</strong>: ";
-                if (property === "form_name") {
+                if (property === "form_name" && dSearch.designRights) {
                     fieldMeta += "<a target=\"blank\" href=\"" + dSearch.designerUrl + "&page=" + field[property] + "\">";
                 }
                 fieldMeta += field[property] + "</li>";
-                if (property === "form_name") {
+                if (property === "form_name" && dSearch.designRights) {
                     fieldMeta += "</a>";
                 }
-                /*if (property === "select_choices_or_calculations") {
-                    fieldMeta += "<ul class='list-unstyled'>";
-                    let valueLabelMap = dSearch.getValuesAndLabels(field[property]);
-                    for (const [key, value] of valueLabelMap.entries()) {
-                        fieldMeta += "<li>" + key + ": " + value + "</li>";
-                    }
-                    fieldMeta += "</ul>";
-                }*/
             }
         }
     }
@@ -367,15 +356,19 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
     return fieldMeta;
 };
 
-// todo finish this function for displaying a single field.
 dSearch.displayField = function (fieldName) {
-    let results = "";
-    dictionary.forEach(function (field) {
-        if (fieldName === field.field_name) {
-            results += dSearch.getFieldMetaForDisplay(field, field.field_name);
+    if (fieldName === "all") {
+        dSearch.displayInstrument(document.getElementById("instrument").value);
+    } else {
+        let results = "";
+        for (let i = 0; i < dictionary.length; i++) {
+            if (fieldName === dictionary[i].field_name) {
+                results += dSearch.getFieldMetaForDisplay(dictionary[i], dictionary[i].field_name);
+                break;
+            }
         }
-    });
-    dSearch.resultsDiv.innerHTML = results;
+        dSearch.resultsDiv.innerHTML = results;
+    }
 };
 
 /**
@@ -483,4 +476,4 @@ dSearch.setSearchFieldTypes = function () {
 
 dSearch.initialize();
 document.getElementById("instrument")[1].selected = true;
-dSearch.displayInstrument(document.getElementById("instrument").value);
+dSearch.selectInstrument(document.getElementById("instrument").value);

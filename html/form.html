@@ -1,7 +1,8 @@
 <form name="dataDictionarySearch" class="form">
     <fieldset>
         <div class="form-group row">
-            <label for="searchString" class="col-sm-2 col-form-label font-weight-bolder">Search for:</label>
+            <label for="searchString" class="col-sm-2 col-form-label font-weight-bolder"
+                   style="font-size:1.4rem;">Search for:</label>
             <div class="col-sm-6">
                 <input type="text" class="form-control" id="searchString" name="searchString"
                        onkeydown="return event.key !== 'Enter';">
@@ -10,7 +11,7 @@
         </div>
     </fieldset>
     <hr>
-    <p class="font-weight-bolder">Search Within:</p>
+    <h5 class="font-weight-bolder">Categories</h5>
     <fieldset>
         <div class="row">
             <div class="col">
@@ -101,7 +102,7 @@
     </fieldset>
     <hr>
     <div class="field-type-options">
-        <p class="font-weight-bolder">Include Field Type(s)</p>
+        <h5 class="font-weight-bolder">Field Type(s)</h5>
         <fieldset>
             <div class="row">
                 <div class="col">
@@ -169,7 +170,7 @@
     <hr>
     <div class="row">
         <div class="col">
-            <p class="font-weight-bolder">Text Specificity</p>
+            <h5 class="font-weight-bolder">Text Specificity</h5>
             <fieldset>
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="fuzzy" id="partialMatch" value="1" checked>
@@ -186,7 +187,7 @@
             </fieldset>
         </div>
         <div class="col">
-            <p class="font-weight-bolder">Case Sensitivity</p>
+            <h5 class="font-weight-bolder">Case Sensitivity</h5>
             <fieldset>
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="upperCase" id="upperCase" value="1" checked>
@@ -203,7 +204,7 @@
             </fieldset>
         </div>
         <div class="col">
-            <p class="font-weight-bolder">Display Results</p>
+            <h5 class="font-weight-bolder">Display Results</h5>
             <fieldset>
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="all_var_info" id="limitResults" value="1"
@@ -226,7 +227,7 @@
         <div class="col-6">
             <label class="font-weight-bolder" for="instrument">Select an instrument</label>
             <select class="custom-select" name="instrument" id="instrument"
-                    onchange="dSearch.displayInstrument(this.value);">
+                    onchange="dSearch.selectInstrument(this.value);">
                 <option value="any">Any</option>
             </select>
         </div>
