@@ -17,7 +17,7 @@ Categories that can be search are the column headers in the data dictionary CSV 
 
 <h4>Text specificity</h4> 
 can be set to match either the exact phrase or a part of the phrase.
-<em>Example:</em> Use Partial Match to search varialbes with the word "amount" in the variable name and the results returned could include "Payment Amount", "Rent Amount", "Drug Amount" and "Amount of liquid."
+<em>Example:</em> Use Partial Match to search variables with the word "amount" in the variable name and the results returned could include "Payment Amount", "Rent Amount", "Drug Amount" and "Amount of liquid."
 
 <h4>Case Sensitivity</h4>
 pertains to whether or not the case is strict or not.
