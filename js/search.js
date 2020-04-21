@@ -12,6 +12,8 @@ dictionary, $, dSearch, designerUrl, designRights
 *  When searching for text all returned values are strong, when only search criteria should be
 *     strong when displaying ALL Information
 *
+* If someone want a list of all SQL fields, how would they get that list?
+*
 * */
 
 dSearch.debugger = false;
@@ -48,7 +50,6 @@ dSearch.initialize = function () {
         "yesno",
         "truefalse",
         "file",
-        "file",
         "slider",
         "descriptive",
         "sql"
@@ -69,13 +70,15 @@ dSearch.initialize = function () {
     dSearch.addOptionsToSelect("fieldNames", dSearch.fieldNames);
 
     dSearch.dictionaryUC = dictionary.map(dSearch.toUpper);
+
+    dSearch.handleEnter();
 };
 
 
 /**
  * Searches all meta data in a field (dictionary row) to find matches.
  * @param dictionaryRow
- * @returns {boolean}  true=matches any criteria specified.  false = does not match anything.
+ * @returns {boolean}  true = matches any criteria specified.  false = does not match anything.
  */
 dSearch.matchCriteria = function (dictionaryRow) {
     let meetsCriteria = false;
@@ -111,7 +114,7 @@ dSearch.matchCriteria = function (dictionaryRow) {
 };
 
 /**
- * Main controller for search form submission.
+ * Controller for search form submission.
  */
 dSearch.submitted = function () {
     dSearch.setAllFieldTypes();
@@ -472,6 +475,17 @@ dSearch.setSearchFieldTypes = function () {
         document.getElementById("all_field_types").checked = true;
         dSearch.searchFieldTypes = ["all_field_types"];
     }
+};
+
+// handle enter plain javascript
+dSearch.handleEnter = function (e) {
+    var input = document.getElementById("searchString");
+    input.addEventListener("keyup", function (event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            dSearch.submitted();
+        }
+    });
 };
 
 dSearch.initialize();
