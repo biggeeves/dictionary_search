@@ -1,5 +1,5 @@
 /*global
-dictionary, $, dSearch, designerUrl, designRights
+$, dSearch, designerUrl, designRights
 */
 /*jslint devel: true */
 
@@ -58,6 +58,7 @@ dSearch.initialize = function () {
     dSearch.instruments = dSearch.getFormNames();
     dSearch.fieldNames = dSearch.getFieldNames();
 
+    dSearch.eventGridDiv = document.getElementById("eventGrid");
     dSearch.resultsDiv = document.getElementById("results");
     dSearch.feedbackDiv = document.getElementById("feedback");
 
@@ -69,7 +70,7 @@ dSearch.initialize = function () {
     dSearch.addMapOptionsToSelect("instrument", dSearch.instrumentNames);
     dSearch.addOptionsToSelect("fieldNames", dSearch.fieldNames);
 
-    dSearch.dictionaryUC = dictionary.map(dSearch.toUpper);
+    dSearch.dictionaryUC = dSearch.dictionary.map(dSearch.toUpper);
 
     dSearch.handleEnter();
 };
@@ -130,6 +131,7 @@ dSearch.submitted = function () {
     dSearch.limitToSelection = Number(document.querySelector("input[name=\"all_var_info\"]:checked").value);
 
     if (dSearch.searchText.length < 1) {
+        dSearch.feedbackDiv.style.display = "block";
         dSearch.feedbackDiv.innerHTML = "What are you searching for?";
         return;
     }
@@ -139,10 +141,12 @@ dSearch.submitted = function () {
      */
     dSearch.setSelectedFields();
     if (!Array.isArray(dSearch.searchFields) || !dSearch.searchFields.length) {
+        dSearch.feedbackDiv.style.display = "block";
         dSearch.feedbackDiv.innerHTML = "Select a category to search";
         return;
     }
 
+    dSearch.feedbackDiv.hide();
     /*
     Limit the number for fields TYPES to just the selected fields..
      */
@@ -152,7 +156,7 @@ dSearch.submitted = function () {
         dSearch.searchText = dSearch.searchText.toUpperCase();
     }
 
-    dSearch.results = dictionary.filter(dSearch.matchCriteria);
+    dSearch.results = dSearch.dictionary.filter(dSearch.matchCriteria);
 
     if (Array.isArray(dSearch.results) && dSearch.results.length === 0) {
         dSearch.resultsDiv.innerHTML = "The dictionary was searched and nothing was found.";
@@ -203,7 +207,7 @@ dSearch.displaySingleField = function (item) {
         }
     }
 
-    dSearch.feedbackDiv.innerHTML = "";
+    dSearch.feedbackDiv.style.display = "none";
     dSearch.resultsDisplay += "<div style='border:1px solid grey;padding:20px;'>" + fieldMeta + "</div>";
 };
 
@@ -225,7 +229,7 @@ dSearch.toggleFieldTypesVisibility = function () {
  */
 dSearch.getFormNames = function () {
     let forms = [];
-    dictionary.forEach(function (field) {
+    dSearch.dictionary.forEach(function (field) {
         forms.push(field.form_name);
     });
     return dSearch.removeDuplicates(forms);
@@ -237,7 +241,7 @@ dSearch.getFormNames = function () {
  */
 dSearch.getFieldNames = function () {
     let fields = [];
-    dictionary.forEach(function (field) {
+    dSearch.dictionary.forEach(function (field) {
         fields.push(field.field_name);
     });
     return dSearch.removeDuplicates(fields);
@@ -292,7 +296,7 @@ dSearch.addFieldNamesToSelectByFormName = function (instrumentName) {
     optionAll.value = "all";
     let fieldNamesSelect = document.getElementById("fieldNames");
     fieldNamesSelect.add(optionAll);
-    dictionary.forEach(function (field) {
+    dSearch.dictionary.forEach(function (field) {
         if (field.form_name === instrumentName || instrumentName === "any") {
             let option = document.createElement("option");
             option.text = field.field_name;
@@ -318,7 +322,7 @@ dSearch.removeDuplicates = function (data) {
 
 dSearch.displayInstrument = function (instrumentName) {
     dSearch.selectedResults = "";
-    dictionary.forEach(function (field) {
+    dSearch.dictionary.forEach(function (field) {
         if (field.form_name === instrumentName) {
             dSearch.selectedResults += dSearch.getFieldMetaForDisplay(field, field.field_name);
             dSearch.selectedResults += "<hr>";
@@ -328,8 +332,29 @@ dSearch.displayInstrument = function (instrumentName) {
 };
 
 dSearch.selectInstrument = function (instrumentName) {
+    dSearch.feedbackDiv.style.display = "none";
+    dSearch.displayFormEvents(instrumentName);
     dSearch.displayInstrument(instrumentName);
     dSearch.addFieldNamesToSelectByFormName(instrumentName);
+};
+
+
+dSearch.displayFormEvents = function (instrumentName) {
+    // console.log(instrumentName);
+    let events = dSearch.getEvents(instrumentName, dSearch.eventGrid);
+    let eventsHTML = "";
+
+    if (0 === events.length) {
+        eventsHTML = "There are no events for " + instrumentName;
+    } else {
+        eventsHTML = "<p>" + instrumentName +
+            " is available on the following events:</p><ul>";
+        for (let i = 0; i < events.length; i++) {
+            eventsHTML += "<li>" + events[i] + "</li>";
+        }
+        eventsHTML += "<ul>";
+    }
+    dSearch.eventGridDiv.innerHTML = eventsHTML;
 };
 
 // todo
@@ -346,9 +371,16 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
                 fieldMeta += "<li>" +
                     "<strong>" + property.replace("_", " ") + "</strong>: ";
                 if (property === "form_name" && dSearch.designRights) {
-                    fieldMeta += "<a target=\"blank\" href=\"" + dSearch.designerUrl + "&page=" + field[property] + "\">";
+                    fieldMeta += "<a target=\"blank\" href=\"" +
+                        dSearch.designerUrl +
+                        "&page=" + field[property] + "\">";
                 }
-                fieldMeta += field[property] + "</li>";
+                if (property === "form_name") {
+                    fieldMeta += dSearch.instrumentNames.get(field[property]);
+                } else {
+                    fieldMeta += field[property];
+                }
+                fieldMeta += "</li>";
                 if (property === "form_name" && dSearch.designRights) {
                     fieldMeta += "</a>";
                 }
@@ -364,9 +396,9 @@ dSearch.displayField = function (fieldName) {
         dSearch.displayInstrument(document.getElementById("instrument").value);
     } else {
         let results = "";
-        for (let i = 0; i < dictionary.length; i++) {
-            if (fieldName === dictionary[i].field_name) {
-                results += dSearch.getFieldMetaForDisplay(dictionary[i], dictionary[i].field_name);
+        for (let i = 0; i < dSearch.dictionary.length; i++) {
+            if (fieldName === dSearch.dictionary[i].field_name) {
+                results += dSearch.getFieldMetaForDisplay(dSearch.dictionary[i], dSearch.dictionary[i].field_name);
                 break;
             }
         }
@@ -423,9 +455,9 @@ dSearch.getValuesAndLabels = function (str) {
 
 dSearch.onlyFieldsMatched = function (fieldName) {
     if (fieldName === "all") {
-        return dictionary;
+        return dSearch.dictionary;
     } else {
-        let results = dictionary.filter(function (field) {
+        let results = dSearch.dictionary.filter(function (field) {
             return (field.field_name === fieldName || fieldName === "all");
         });
     }
@@ -488,6 +520,32 @@ dSearch.handleEnter = function (e) {
     });
 };
 
-dSearch.initialize();
-document.getElementById("instrument")[1].selected = true;
-dSearch.selectInstrument(document.getElementById("instrument").value);
+dSearch.getEvents = function (instrumentShortName, eventGrid) {
+    let instrumentEvents = [];
+    for (let event in eventGrid) {
+        if (!eventGrid.hasOwnProperty(event)) {
+            continue;
+        }
+        let instruments = eventGrid[event];
+        // console.log(instruments);
+        for (let instrument in instruments) {
+            // skip loop if the property is from prototype
+            if (!instruments.hasOwnProperty(instrument)) {
+                continue;
+            }
+            if (instrumentShortName === instrument) {
+                if (instruments[instrument] === true) {
+                    instrumentEvents.push(event);
+                }
+            }
+        }
+    }
+    return instrumentEvents;
+};
+
+$(document).ready(function () {
+    dSearch.initialize();
+    document.getElementById("instrument")[1].selected = true;
+    dSearch.selectInstrument(document.getElementById("instrument").value);
+});
+

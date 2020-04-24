@@ -27,7 +27,38 @@ class DictionarySearch extends AbstractExternalModule
     /**
      * @var array|string
      */
-    private $instrument_names;
+    private $instrumentNames;
+
+    /**
+     * @var boolean| true=has design rights.  False=Does not have designer rights.
+     */
+    private $designRights;
+    /**
+     * @var array  Multidimensional Array
+     * Array 1 is eventId and contains Array 2 (Key value Array)
+     * Array 2 shortName => (true = given at time point.  False=Not at time point)
+     *
+     * Sample: [166] => Array
+     * (
+     * [instrument_1] => true
+     * [instrument_2] => false
+     * [instrument_3] => false
+     * [instrument_4] => true
+     * )
+     */
+    private $eventGrid;
+    /**
+     * @var array|bool|mixed
+     */
+    private $events;
+    /**
+     * @var array every instrument has a complete variable.
+     */
+    private $completedInstrumentVars;
+    /**
+     * @var false|string
+     */
+    private $eventGridJSON;
 
     public function __construct()
     {
@@ -58,9 +89,9 @@ class DictionarySearch extends AbstractExternalModule
         }
         $this->setDataDictionaryJSON($project_id);
 
-        $this->instrument_names = REDCap::getInstrumentNames();
-
-        $user = array_shift(REDCap::getUserRights(USERID));
+        $this->instrumentNames = REDCap::getInstrumentNames();
+        $userRights = REDCap::getUserRights(USERID);
+        $user = array_shift($userRights);
 
         if ($user['design'] == 1) {
             $this->designRights = true;
@@ -68,7 +99,15 @@ class DictionarySearch extends AbstractExternalModule
             $this->designRights = false;
         }
 
-        echo $this->renderForm();
+        $this->setEvents();
+
+        $this->setInstrumentCompleteVar($this->instrumentNames);
+
+        $this->setEventGrid($project_id, array_keys($this->events));
+
+        $this->renderForm();
+
+        $this->renderEventGrid();
 
         echo $this->renderScripts();
 
@@ -127,13 +166,13 @@ class DictionarySearch extends AbstractExternalModule
         if ($contents === false) {
             return 'HTML form not found';
         }
-        return $contents;
+        echo $contents;
     }
 
-    private function setInstrumentsNamesJS()
+    private function getInstrumentsNamesJS()
     {
         $js = '<script>dSearch.instrumentNames = new Map();';
-        foreach ($this->instrument_names as $short => $long) {
+        foreach ($this->instrumentNames as $short => $long) {
             $long = str_replace('"', '', $long);
             $js .= 'dSearch.instrumentNames.set("' . $short . '", "' . $long . '");';
         }
@@ -143,7 +182,7 @@ class DictionarySearch extends AbstractExternalModule
 
     private function renderScripts()
     {
-        $dictionary = '<script>const dictionary = ' . $this->getDataDictionary() . ';</script>';
+        $dictionary = '<script>dSearch.dictionary = ' . $this->getDataDictionary() . ';</script>';
         $jsUrl = '<script src="' . $this->getJSUrl() . '"></script>';
         $designerUrl = '<script>dSearch.designerUrl="' . $this->getOnlineDesignerURL() . '";</script>';
         $designRights = '<script>dSearch.designRights=';
@@ -153,16 +192,91 @@ class DictionarySearch extends AbstractExternalModule
             $designRights .= 'false';
         }
         $designRights .= '</script>';
-        return $this->dSearchJsObject() .
-            $this->setInstrumentsNamesJS() .
-            $dictionary .
-            $jsUrl .
-            $designerUrl .
-            $designRights;
+
+        return $this->dSearchJsObject() . PHP_EOL .
+            $this->getInstrumentsNamesJS() . PHP_EOL .
+            $dictionary . PHP_EOL .
+            $jsUrl . PHP_EOL .
+            $designerUrl . PHP_EOL .
+            $designRights . PHP_EOL .
+            $this->getEventGridJS($this->eventGrid) . PHP_EOL;
     }
 
     private function dSearchJsObject()
     {
         return '<script>var dSearch = {};</script>';
+    }
+
+    private function setInstrumentCompleteVar($instrumentNames)
+    {
+        $this->completedInstrumentVars = [];
+        foreach ($instrumentNames as $shortName => $longName) {
+            $this->completedInstrumentVars[$shortName] = $shortName . '_complete';
+        }
+    }
+
+    private function setEvents()
+    {
+        $this->events = REDCap::getEventNames(true, false);
+    }
+
+
+    private function setEventGrid($project_id, $eventIds)
+    {
+        global $project_id;
+        // Check if project is longitudinal first
+        if (!REDCap::isLongitudinal()) {
+            return null;
+        }
+
+        $this->eventGrid = [];
+
+        foreach ($eventIds as $eventId) {
+            $allFieldsByEvent = REDCap::getValidFieldsByEvents($project_id, $eventId);
+            foreach ($this->completedInstrumentVars as $shortName => $complete) {
+                $this->eventGrid[$eventId][$shortName] = false;
+                if (in_array($complete, $allFieldsByEvent)) {
+                    $this->eventGrid[$eventId][$shortName] = true;
+                }
+            }
+        }
+    }
+
+    private function getEventGrid()
+    {
+        return $this->eventGrid();
+    }
+
+    public function renderEventGrid()
+    {
+        $eventTable = "<table class='table table-bordered'><tr><td>Event</td>";
+        foreach ($this->instrumentNames as $shortName => $longName) {
+            $eventTable .= "<th data-form-name='" . $shortName . "'>" . $longName . '</th>';
+        }
+        $eventTable .= "</tr>";
+
+        foreach ($this->eventGrid as $eventId => $formEvents) {
+
+            $eventTable .= "<tr><td data-event='" . $eventId . "'>" .
+                $this->events[$eventId] .
+                "</td>";
+            foreach ($formEvents as $form => $hasEvent) {
+                if ($hasEvent) {
+                    $eventTable .= "<td>Y</td>";
+                } else {
+                    $eventTable .= "<td>N</td>";
+                }
+            }
+            $eventTable .= "</tr>";
+        }
+        $eventTable .= "</table>";
+        echo $eventTable;
+    }
+
+    private function getEventGridJS($eventGrid)
+    {
+        $this->eventGridJSON = json_encode($eventGrid);
+        $eventGrid = '<script>dSearch.eventGrid=' . $this->eventGridJSON . ';</script>';
+        return $eventGrid;
     }
 }
