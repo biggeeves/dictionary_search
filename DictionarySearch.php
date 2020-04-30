@@ -9,7 +9,6 @@ use \Security as Security;
 
 /** todo
  * Change required, custom alignment, identifier to appropriate drop downs (if needed)
- * dictionary is still in the global scope and needs to be moved to dSearch object.
  **/
 
 /**
@@ -50,7 +49,7 @@ class DictionarySearch extends AbstractExternalModule
     /**
      * @var array|bool|mixed
      */
-    private $events;
+    private $eventNames;
     /**
      * @var array every instrument has a complete variable.
      */
@@ -59,6 +58,10 @@ class DictionarySearch extends AbstractExternalModule
      * @var false|string
      */
     private $eventGridJSON;
+    /**
+     * @var array|bool|mixed
+     */
+    private $eventLabels;
 
     public function __construct()
     {
@@ -99,15 +102,16 @@ class DictionarySearch extends AbstractExternalModule
             $this->designRights = false;
         }
 
-        $this->setEvents();
+        $this->setEventNames();
+        $this->setEventNameLabels();
 
         $this->setInstrumentCompleteVar($this->instrumentNames);
 
-        $this->setEventGrid($project_id, array_keys($this->events));
+        $this->setEventGrid($project_id, array_keys($this->eventNames));
 
         $this->renderForm();
 
-        $this->renderEventGrid();
+        // $this->renderEventGrid();
 
         echo $this->renderScripts();
 
@@ -171,12 +175,33 @@ class DictionarySearch extends AbstractExternalModule
 
     private function getInstrumentsNamesJS()
     {
-        $js = '<script>dSearch.instrumentNames = new Map();';
+        $js = '<script>dSearch.instrumentNames = new Map([';
         foreach ($this->instrumentNames as $short => $long) {
-            $long = str_replace('"', '', $long);
-            $js .= 'dSearch.instrumentNames.set("' . $short . '", "' . $long . '");';
+            $long = str_replace('"', "'", $long);
+            $js .= '["' . $short . '", "' . $long . '"],';
         }
-        $js .= '</script>';
+        $js .= ']);</script>';
+        return $js;
+    }
+
+
+    private function getEventNamesJS()
+    {
+        $js = '<script>dSearch.eventNames = new Map([';
+        foreach ($this->eventNames as $eventId => $shortName) {
+            $js .= '[' . $eventId . ', "' . $shortName . '"],';
+        }
+        $js .= ']);</script>';
+        return $js;
+    }
+
+    private function getEventLabelsJS()
+    {
+        $js = '<script>dSearch.eventLabels = new Map([';
+        foreach ($this->eventLabels as $eventId => $label) {
+            $js .= '[' . $eventId . ', "' . $label . '"],';
+        }
+        $js .= ']);</script>';
         return $js;
     }
 
@@ -193,13 +218,20 @@ class DictionarySearch extends AbstractExternalModule
         }
         $designRights .= '</script>';
 
-        return $this->dSearchJsObject() . PHP_EOL .
+        $scripts = $this->dSearchJsObject() . PHP_EOL .
             $this->getInstrumentsNamesJS() . PHP_EOL .
             $dictionary . PHP_EOL .
             $jsUrl . PHP_EOL .
             $designerUrl . PHP_EOL .
-            $designRights . PHP_EOL .
-            $this->getEventGridJS($this->eventGrid) . PHP_EOL;
+            $designRights . PHP_EOL;
+        if (REDCap::isLongitudinal()) {
+            $scripts .= $this->getEventGridJS($this->eventGrid) . PHP_EOL .
+                $this->getEventNamesJS() . PHP_EOL .
+                $this->getEventLabelsJS() . PHP_EOL;
+        }
+
+        return $scripts;
+
     }
 
     private function dSearchJsObject()
@@ -215,9 +247,14 @@ class DictionarySearch extends AbstractExternalModule
         }
     }
 
-    private function setEvents()
+    private function setEventNames()
     {
-        $this->events = REDCap::getEventNames(true, false);
+        $this->eventNames = REDCap::getEventNames(true, false);
+    }
+
+    private function setEventNameLabels()
+    {
+        $this->eventLabels = REDCap::getEventNames(false, false);
     }
 
 
@@ -258,7 +295,7 @@ class DictionarySearch extends AbstractExternalModule
         foreach ($this->eventGrid as $eventId => $formEvents) {
 
             $eventTable .= "<tr><td data-event='" . $eventId . "'>" .
-                $this->events[$eventId] .
+                $this->eventNames[$eventId] .
                 "</td>";
             foreach ($formEvents as $form => $hasEvent) {
                 if ($hasEvent) {

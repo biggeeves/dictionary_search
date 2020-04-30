@@ -146,7 +146,7 @@ dSearch.submitted = function () {
         return;
     }
 
-    dSearch.feedbackDiv.hide();
+    dSearch.feedbackDiv.style.display = "none";
     /*
     Limit the number for fields TYPES to just the selected fields..
      */
@@ -222,6 +222,34 @@ dSearch.toggleFieldTypesVisibility = function () {
     }
 
 };
+
+/**
+ * toggle checkmarks for all categories
+ */
+dSearch.toggleAllCategories = function () {
+    let isChecked = document.getElementById("all_categories").checked;
+    if (isChecked) {
+        $("#form-check-label").html("Uncheck All");
+    } else {
+        $("#form-check-label").html("Check All");
+    }
+    dSearch.checkAllCategories(isChecked);
+};
+
+/**
+ *  if any category is checked, uncheck all_categories
+ *
+ */
+dSearch.checkAllCategories = function (action) {
+    dSearch.dictionaryFields.forEach(function (value, key, map) {
+        dSearch.syncToggleAllCategories(action, value);
+    });
+};
+
+dSearch.syncToggleAllCategories = function (action, value) {
+    document.getElementById(value).checked = action;
+};
+
 
 /**
  * Get unique array of instrument names
@@ -350,7 +378,14 @@ dSearch.displayFormEvents = function (instrumentName) {
         eventsHTML = "<p>" + instrumentName +
             " is available on the following events:</p><ul>";
         for (let i = 0; i < events.length; i++) {
-            eventsHTML += "<li>" + events[i] + "</li>";
+            eventsHTML += "<li>";
+            let eventLabel = dSearch.getEventLabel(parseInt(events[i]));
+            if (eventLabel) {
+                eventsHTML += eventLabel;
+            } else {
+                eventsHTML += events[i];
+            }
+            eventsHTML += "</li>";
         }
         eventsHTML += "<ul>";
     }
@@ -370,10 +405,18 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
                 }
                 fieldMeta += "<li>" +
                     "<strong>" + property.replace("_", " ") + "</strong>: ";
-                if (property === "form_name" && dSearch.designRights) {
-                    fieldMeta += "<a target=\"blank\" href=\"" +
-                        dSearch.designerUrl +
-                        "&page=" + field[property] + "\">";
+
+                if (dSearch.designRights) {
+                    if (property === "form_name") {
+                        fieldMeta += "<a target=\"blank\" href=\"" +
+                            dSearch.designerUrl +
+                            "&page=" + field[property] + "\">";
+                    } else if (property === "field_name") {
+                        fieldMeta += "<a target=\"blank\" href=\"" +
+                            dSearch.designerUrl +
+                            "&page=" + field.form_name + "&field=" + field[property] + "\">";
+                    }
+
                 }
                 if (property === "form_name") {
                     fieldMeta += dSearch.instrumentNames.get(field[property]);
@@ -418,14 +461,13 @@ dSearch.debugDictionarySearch = function () {
 };
 
 /**
- *  if any field types are checked, uncheck all_field_types
+ *  if a single field type is checked, uncheck all_field_types
  *
  */
 dSearch.setAllFieldTypes = function () {
     let oneIsChecked = dSearch.redcap_field_types.some(dSearch.isFieldTypeSelected);
     document.getElementById("all_field_types").checked = !oneIsChecked;
 };
-
 
 /**
  *
@@ -542,6 +584,25 @@ dSearch.getEvents = function (instrumentShortName, eventGrid) {
     }
     return instrumentEvents;
 };
+
+// returns unique event name
+dSearch.getEventName = function (eventId) {
+    if (dSearch.eventNames.get(eventId)) {
+        return dSearch.eventNames.get(eventId);
+    } else {
+        return null;
+    }
+};
+
+// returns event label (human readable)
+dSearch.getEventLabel = function (eventId) {
+    if (dSearch.eventLabels.get(eventId)) {
+        return dSearch.eventLabels.get(eventId);
+    } else {
+        return null;
+    }
+};
+
 
 $(document).ready(function () {
     dSearch.initialize();
