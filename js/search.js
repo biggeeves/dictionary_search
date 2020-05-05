@@ -1,5 +1,5 @@
 /*global
-$, dSearch, designerUrl, designRights
+$, dSearch, designerUrl, canAccessDesigner
 */
 /*jslint devel: true */
 
@@ -198,7 +198,7 @@ dSearch.displaySingleField = function (item) {
                 let propertyLabel = "<strong>" + propertyName.replace("_", " ") + "</strong>";
                 if (propertyName === "field_name") {
                     propertyValue = "<strong>" + propertyValue + "</strong>";
-                } else if (propertyName === "form_name" && dSearch.designRights) {
+                } else if (propertyName === "form_name" && dSearch.canAccessDesigner) {
                     propertyValue = "<a target=\"blank\" href=\"" + dSearch.designerUrl + "&page=" + item[propertyName] + "\">" +
                         propertyValue + "</a>";
                 }
@@ -406,7 +406,7 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
                 fieldMeta += "<li>" +
                     "<strong>" + property.replace("_", " ") + "</strong>: ";
 
-                if (dSearch.designRights) {
+                if (dSearch.canAccessDesigner) {
                     if (property === "form_name") {
                         fieldMeta += "<a target=\"blank\" href=\"" +
                             dSearch.designerUrl +
@@ -424,7 +424,7 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
                     fieldMeta += field[property];
                 }
                 fieldMeta += "</li>";
-                if (property === "form_name" && dSearch.designRights) {
+                if (property === "form_name" && dSearch.canAccessDesigner) {
                     fieldMeta += "</a>";
                 }
             }

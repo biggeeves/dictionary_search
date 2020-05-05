@@ -63,6 +63,11 @@ class DictionarySearch extends AbstractExternalModule
      */
     private $eventLabels;
 
+    /**
+     * @var bool  true=Project is in Design Mode and User has designer rights.
+     */
+    private $canAccessDesigner;
+
     public function __construct()
     {
         parent::__construct();
@@ -96,11 +101,7 @@ class DictionarySearch extends AbstractExternalModule
         $userRights = REDCap::getUserRights(USERID);
         $user = array_shift($userRights);
 
-        if ($user['design'] == 1) {
-            $this->designRights = true;
-        } else {
-            $this->designRights = false;
-        }
+        $this->canAccessDesigner();
 
         $this->setEventNames();
         $this->setEventNameLabels();
@@ -114,6 +115,29 @@ class DictionarySearch extends AbstractExternalModule
         // $this->renderEventGrid();
 
         echo $this->renderScripts();
+
+    }
+
+    private function canAccessDesigner()
+    {
+        global $draft_mode;  // 1=Draft Mode
+        global $status;  // 0=Design Mode, 1=Production
+        $userRights = REDCap::getUserRights(USERID);
+        $user = array_shift($userRights);
+
+        // No rights until proven.
+        $this->canAccessDesigner = false;
+        $this->designRights = false;
+
+        if ($user['design'] == 1) {
+            $this->designRights = true;
+        }
+
+        if ($status == 0 || $draft_mode == 1) {
+            if ($user['design'] == 1) {
+                $this->canAccessDesigner = true;
+            }
+        }
 
     }
 
@@ -210,20 +234,20 @@ class DictionarySearch extends AbstractExternalModule
         $dictionary = '<script>dSearch.dictionary = ' . $this->getDataDictionary() . ';</script>';
         $jsUrl = '<script src="' . $this->getJSUrl() . '"></script>';
         $designerUrl = '<script>dSearch.designerUrl="' . $this->getOnlineDesignerURL() . '";</script>';
-        $designRights = '<script>dSearch.designRights=';
-        if ($this->designRights) {
-            $designRights .= 'true';
+        $canAccessDesignerJS = '<script>dSearch.canAccessDesigner=';
+        if ($this->canAccessDesigner) {
+            $canAccessDesignerJS .= 'true';
         } else {
-            $designRights .= 'false';
+            $canAccessDesignerJS .= 'false';
         }
-        $designRights .= '</script>';
+        $canAccessDesignerJS .= '</script>';
 
         $scripts = $this->dSearchJsObject() . PHP_EOL .
             $this->getInstrumentsNamesJS() . PHP_EOL .
             $dictionary . PHP_EOL .
             $jsUrl . PHP_EOL .
             $designerUrl . PHP_EOL .
-            $designRights . PHP_EOL;
+            $canAccessDesignerJS . PHP_EOL;
         if (REDCap::isLongitudinal()) {
             $scripts .= $this->getEventGridJS($this->eventGrid) . PHP_EOL .
                 $this->getEventNamesJS() . PHP_EOL .
