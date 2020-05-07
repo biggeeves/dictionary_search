@@ -8,7 +8,8 @@ use \REDCap as REDCap;
 use \Security as Security;
 
 /** todo
- * Change required, custom alignment, identifier to appropriate drop downs (if needed)
+ * Change custom alignment to appropriate drop downs (if needed)
+ * bug: Required category when checked should search for required fields only.
  **/
 
 /**
@@ -96,7 +97,6 @@ class DictionarySearch extends AbstractExternalModule
             return;
         }
         $this->setDataDictionaryJSON($project_id);
-
         $this->instrumentNames = REDCap::getInstrumentNames();
         $userRights = REDCap::getUserRights(USERID);
         $user = array_shift($userRights);

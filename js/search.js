@@ -1,5 +1,5 @@
 /*global
-$, dSearch, designerUrl, canAccessDesigner
+$, dSearch, designerUrl, canAccessDesigner, dictionary
 */
 /*jslint devel: true */
 
@@ -11,6 +11,8 @@ $, dSearch, designerUrl, canAccessDesigner
 *  Does output need to be properly escaped? (looking for double quotes).
 *  When searching for text all returned values are strong, when only search criteria should be
 *     strong when displaying ALL Information
+*
+* Bug: search for [ and invalid regular expression on line 205
 *
 * If someone want a list of all SQL fields, how would they get that list?
 *
@@ -73,6 +75,7 @@ dSearch.initialize = function () {
     dSearch.dictionaryUC = dSearch.dictionary.map(dSearch.toUpper);
 
     dSearch.handleEnter();
+    document.getElementById("searchString").focus();
 };
 
 
@@ -95,6 +98,19 @@ dSearch.matchCriteria = function (dictionaryRow) {
     for (let property of dSearch.searchFields) {
 
         let valueOfField = dictionaryRow[property].valueOf();
+        /* Required fields, Identifiers, Matrix Ranking are included properties only when they are checked by the user
+          Only then must they meet criteria below.  If the property is not included in Search Fields than the user
+          did not check it and thus will be checked here for the value Y.
+         */
+        if (property === "required_field" && valueOfField !== "y") {
+            return false;
+        }
+        if (property === "identifier" && valueOfField !== "y") {
+            return false;
+        }
+        if (property === "matrix_ranking" && valueOfField !== "y") {
+            return false;
+        }
 
         if (dSearch.upperCase === 1) {
             valueOfField = valueOfField.toUpperCase();
@@ -195,14 +211,25 @@ dSearch.displaySingleField = function (item) {
         if (item.hasOwnProperty(propertyName)) {
             if (item[propertyName] !== "") {
                 let propertyValue = item[propertyName].replace(new RegExp(dSearch.searchText, "gi"), "<strong>" + dSearch.searchText + "</strong>");
-                let propertyLabel = "<strong>" + propertyName.replace("_", " ") + "</strong>";
+
+                let propertyLabel = propertyName.replace(/_/g, " ");
+                propertyLabel = propertyLabel.charAt(0).toUpperCase() + propertyLabel.slice(1);
+
+                /*
+                let propertyLabel = "<strong>" +
+                    propertyName.replace(/_/g, " ") +
+                    "</strong>";
+
+
+*/
+
                 if (propertyName === "field_name") {
                     propertyValue = "<strong>" + propertyValue + "</strong>";
                 } else if (propertyName === "form_name" && dSearch.canAccessDesigner) {
                     propertyValue = "<a target=\"blank\" href=\"" + dSearch.designerUrl + "&page=" + item[propertyName] + "\">" +
                         propertyValue + "</a>";
                 }
-                fieldMeta = fieldMeta + "<p>" + propertyLabel + ": " + propertyValue + "</p>";
+                fieldMeta = fieldMeta + "<p><strong>" + propertyLabel + "</strong>: " + propertyValue + "</p>";
             }
         }
     }
@@ -403,8 +430,10 @@ dSearch.getFieldMetaForDisplay = function (field, fieldName) {
                 if (field[property] === "") {
                     continue;
                 }
+                let fieldNameDisplay = property.replace(/_/g, " ");
+                fieldNameDisplay = fieldNameDisplay.charAt(0).toUpperCase() + fieldNameDisplay.slice(1);
                 fieldMeta += "<li>" +
-                    "<strong>" + property.replace("_", " ") + "</strong>: ";
+                    "<strong>" + fieldNameDisplay + "</strong>: ";
 
                 if (dSearch.canAccessDesigner) {
                     if (property === "form_name") {
