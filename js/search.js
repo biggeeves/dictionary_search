@@ -210,18 +210,10 @@ dSearch.displaySingleField = function (item) {
 
         if (item.hasOwnProperty(propertyName)) {
             if (item[propertyName] !== "") {
-                let propertyValue = item[propertyName].replace(new RegExp(dSearch.searchText, "gi"), "<strong>" + dSearch.searchText + "</strong>");
+                let propertyValue = item[propertyName].split(dSearch.searchText).join("<span class='dSearch-bolder'>" + dSearch.searchText + "</span>");
 
                 let propertyLabel = propertyName.replace(/_/g, " ");
                 propertyLabel = propertyLabel.charAt(0).toUpperCase() + propertyLabel.slice(1);
-
-                /*
-                let propertyLabel = "<strong>" +
-                    propertyName.replace(/_/g, " ") +
-                    "</strong>";
-
-
-*/
 
                 if (propertyName === "field_name") {
                     propertyValue = "<strong>" + propertyValue + "</strong>";

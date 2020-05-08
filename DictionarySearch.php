@@ -9,7 +9,6 @@ use \Security as Security;
 
 /** todo
  * Change custom alignment to appropriate drop downs (if needed)
- * bug: Required category when checked should search for required fields only.
  **/
 
 /**
@@ -29,10 +28,6 @@ class DictionarySearch extends AbstractExternalModule
      */
     private $instrumentNames;
 
-    /**
-     * @var boolean| true=has design rights.  False=Does not have designer rights.
-     */
-    private $designRights;
     /**
      * @var array  Multidimensional Array
      * Array 1 is eventId and contains Array 2 (Key value Array)
@@ -55,10 +50,6 @@ class DictionarySearch extends AbstractExternalModule
      * @var array every instrument has a complete variable.
      */
     private $completedInstrumentVars;
-    /**
-     * @var false|string
-     */
-    private $eventGridJSON;
     /**
      * @var array|bool|mixed
      */
@@ -127,10 +118,10 @@ class DictionarySearch extends AbstractExternalModule
 
         // No rights until proven.
         $this->canAccessDesigner = false;
-        $this->designRights = false;
+        $designRights = false;
 
         if ($user['design'] == 1) {
-            $this->designRights = true;
+            $designRights = true;
         }
 
         if ($status == 0 || $draft_mode == 1) {
@@ -336,8 +327,8 @@ class DictionarySearch extends AbstractExternalModule
 
     private function getEventGridJS($eventGrid)
     {
-        $this->eventGridJSON = json_encode($eventGrid);
-        $eventGrid = '<script>dSearch.eventGrid=' . $this->eventGridJSON . ';</script>';
+        $eventGridJSON = json_encode($eventGrid);
+        $eventGrid = '<script>dSearch.eventGrid=' . $eventGridJSON . ';</script>';
         return $eventGrid;
     }
 }
