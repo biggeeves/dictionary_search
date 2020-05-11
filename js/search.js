@@ -64,6 +64,8 @@ dSearch.initialize = function () {
     dSearch.resultsDiv = document.getElementById("results");
     dSearch.feedbackDiv = document.getElementById("feedback");
 
+    dSearch.scrollToTopBtn = document.getElementById("scrollToTop");
+
     dSearch.searchFields = [];
     dSearch.searchFieldTypes = [];
 
@@ -139,7 +141,9 @@ dSearch.submitted = function () {
         dSearch.debugDictionarySearch();
     }
     dSearch.resultsDiv.innerHTML = "";
-    dSearch.feedbackDiv.innerHTML = "";
+    let feedBack = dSearch.today();
+    console.log(feedBack);
+    dSearch.feedbackDiv.innerHTML = feedBack;
 
     dSearch.fuzzy = Number(document.querySelector("input[name=\"fuzzy\"]:checked").value);
     dSearch.upperCase = Number(document.querySelector("input[name=\"upperCase\"]:checked").value);
@@ -161,8 +165,9 @@ dSearch.submitted = function () {
         dSearch.feedbackDiv.innerHTML = "Select a category to search";
         return;
     }
-
-    dSearch.feedbackDiv.style.display = "none";
+    dSearch.feedbackDiv.style.display = "block";
+    dSearch.feedbackDiv.innerHTML = "Results generated: " + feedBack;
+    // dSearch.feedbackDiv.style.display = "none";
     /*
     Limit the number for fields TYPES to just the selected fields..
      */
@@ -226,7 +231,7 @@ dSearch.displaySingleField = function (item) {
         }
     }
 
-    dSearch.feedbackDiv.style.display = "none";
+    // dSearch.feedbackDiv.style.display = "none";
     dSearch.resultsDisplay += "<div style='border:1px solid grey;padding:20px;'>" + fieldMeta + "</div>";
 };
 
@@ -624,10 +629,38 @@ dSearch.getEventLabel = function (eventId) {
     }
 };
 
+// Returns human readable today as Month Day Year
+dSearch.today = function () {
+    let today = new Date();
+    const month = today.toLocaleString("default", {month: "long"});
+    let prettyDate = month + " " + today.getDate() + ", " + today.getFullYear();
+    return prettyDate;
+};
+
+dSearch.scroll = function () {
+    console.log("In Scroll Function Hide/Show");
+    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+        dSearch.scrollToTopBtn.style.display = "block";
+        console.log("In Scroll display Block");
+    } else {
+        console.log("In Scroll display none");
+        dSearch.scrollToTopBtn.style.display = "none";
+    }
+};
+
+dSearch.scrollToTop = function () {
+    console.log("In Scroll Function to Top");
+    document.body.scrollTop = 0; // For Safari
+    document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+};
+
 
 $(document).ready(function () {
     dSearch.initialize();
     document.getElementById("instrument")[1].selected = true;
     dSearch.selectInstrument(document.getElementById("instrument").value);
-});
+    window.onscroll = function () {
+        dSearch.scroll();
+    };
 
+});
