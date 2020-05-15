@@ -12,13 +12,12 @@ $, dSearch, designerUrl, canAccessDesigner, dictionary
 *  When searching for text all returned values are strong, when only search criteria should be
 *     strong when displaying ALL Information
 *
-* Bug: search for [ and invalid regular expression on line 205
-*
+* bug: Search for [ and field type only Yes/No.  Returns calculated field in pid=33.  It shouldn't
 * If someone want a list of all SQL fields, how would they get that list?
 *
 * */
 
-dSearch.debugger = false;
+dSearch.debugger = true;
 
 dSearch.initialize = function () {
     dSearch.dictionaryFields = [
@@ -60,11 +59,16 @@ dSearch.initialize = function () {
     dSearch.instruments = dSearch.getFormNames();
     dSearch.fieldNames = dSearch.getFieldNames();
 
-    dSearch.eventGridDiv = document.getElementById("eventGrid");
     dSearch.resultsDiv = document.getElementById("results");
     dSearch.feedbackDiv = document.getElementById("feedback");
-
     dSearch.scrollToTopBtn = document.getElementById("scrollToTop");
+
+    if (dSearch.isLongitudinal) {
+        dSearch.eventTable = document.getElementById("eventTable");
+        dSearch.toggleEventTableBtn = document.getElementById("toggleEventTable");
+        dSearch.eventListDiv = document.getElementById("eventList");
+    }
+
 
     dSearch.searchFields = [];
     dSearch.searchFieldTypes = [];
@@ -97,6 +101,19 @@ dSearch.matchCriteria = function (dictionaryRow) {
         return el !== "";
     });
 
+    let matchProperties = [];
+    dSearch.searchFields.forEach(function (property) {
+        matchProperties[property] = false;
+    });
+
+    if (!dSearch.searchFieldTypes.includes(dictionaryRow.field_type)) {
+        console.log(dSearch.searchFieldTypes);
+        console.log("got a match: " + dictionaryRow.field_type);
+        return false;
+    }
+
+    console.log(dictionaryRow.field_name);
+
     for (let property of dSearch.searchFields) {
 
         let valueOfField = dictionaryRow[property].valueOf();
@@ -104,31 +121,40 @@ dSearch.matchCriteria = function (dictionaryRow) {
           Only then must they meet criteria below.  If the property is not included in Search Fields than the user
           did not check it and thus will be checked here for the value Y.
          */
-        if (property === "required_field" && valueOfField !== "y") {
-            return false;
-        }
-        if (property === "identifier" && valueOfField !== "y") {
-            return false;
-        }
-        if (property === "matrix_ranking" && valueOfField !== "y") {
-            return false;
+
+        if (property === "required_field" && valueOfField === "y") {
+            matchProperties[property] = true;
+        } else if (property === "identifier" && valueOfField === "y") {
+            matchProperties[property] = true;
+        } else if (property === "matrix_ranking" && valueOfField === "y") {
+            matchProperties[property] = true;
         }
 
         if (dSearch.upperCase === 1) {
             valueOfField = valueOfField.toUpperCase();
         }
 
-        if (dSearch.fuzzy === 0) {
-            if (valueOfField === dSearch.searchText) {
-                meetsCriteria = true;
-            }
-        } else {
-            if (valueOfField.includes(dSearch.searchText)) {
-                meetsCriteria = true;
+        /* search for text if search string was submitted */
+        if (dSearch.searchText.length > 0) {
+            if (dSearch.fuzzy === 0) {
+                if (valueOfField === dSearch.searchText) {
+                    matchProperties[property] = true;
+                    meetsCriteria = true;
+                }
+            } else {
+                if (valueOfField.includes(dSearch.searchText)) {
+                    matchProperties[property] = true;
+                    meetsCriteria = true;
+                }
             }
         }
     }
-
+    /* if the search string is zero than return true is the user searched for required, identifier, or matrix ranking
+    * Example: Search for all required fields does not need search text.
+    * */
+    if (dSearch.searchText.length === 0) {
+        meetsCriteria = Object.values(matchProperties).some(Boolean);
+    }
     return meetsCriteria;
 };
 
@@ -137,9 +163,6 @@ dSearch.matchCriteria = function (dictionaryRow) {
  */
 dSearch.submitted = function () {
     dSearch.setAllFieldTypes();
-    if (dSearch.debugger) {
-        dSearch.debugDictionarySearch();
-    }
     dSearch.resultsDiv.innerHTML = "";
     let feedBack = dSearch.today();
     console.log(feedBack);
@@ -150,11 +173,11 @@ dSearch.submitted = function () {
     dSearch.searchText = document.getElementById("searchString").value.trim();
     dSearch.limitToSelection = Number(document.querySelector("input[name=\"all_var_info\"]:checked").value);
 
-    if (dSearch.searchText.length < 1) {
+    /*if (dSearch.searchText.length < 1) {
         dSearch.feedbackDiv.style.display = "block";
         dSearch.feedbackDiv.innerHTML = "What are you searching for?";
         return;
-    }
+    }*/
 
     /*
     Limit the number for fields searched to just the user selected fields.
@@ -167,14 +190,19 @@ dSearch.submitted = function () {
     }
     dSearch.feedbackDiv.style.display = "block";
     dSearch.feedbackDiv.innerHTML = "Results generated: " + feedBack;
+
     // dSearch.feedbackDiv.style.display = "none";
     /*
     Limit the number for fields TYPES to just the selected fields..
      */
     dSearch.setSearchFieldTypes();
+    console.log(dSearch.setSearchFieldTypes);
 
     if (dSearch.upperCase === 1) {
         dSearch.searchText = dSearch.searchText.toUpperCase();
+    }
+    if (dSearch.debugger) {
+        dSearch.debugDictionarySearch();
     }
 
     dSearch.results = dSearch.dictionary.filter(dSearch.matchCriteria);
@@ -244,7 +272,6 @@ dSearch.toggleFieldTypesVisibility = function () {
     } else {
         $(".field-type").show("slow");
     }
-
 };
 
 /**
@@ -252,11 +279,6 @@ dSearch.toggleFieldTypesVisibility = function () {
  */
 dSearch.toggleAllCategories = function () {
     let isChecked = document.getElementById("all_categories").checked;
-    if (isChecked) {
-        $("#form-check-label").html("Uncheck All");
-    } else {
-        $("#form-check-label").html("Check All");
-    }
     dSearch.checkAllCategories(isChecked);
 };
 
@@ -385,21 +407,26 @@ dSearch.displayInstrument = function (instrumentName) {
 
 dSearch.selectInstrument = function (instrumentName) {
     dSearch.feedbackDiv.style.display = "none";
-    dSearch.displayFormEvents(instrumentName);
+    if (dSearch.isLongitudinal) {
+        dSearch.displayFormEvents(instrumentName);
+    }
     dSearch.displayInstrument(instrumentName);
     dSearch.addFieldNamesToSelectByFormName(instrumentName);
 };
 
 
 dSearch.displayFormEvents = function (instrumentName) {
-    // console.log(instrumentName);
     let events = dSearch.getEvents(instrumentName, dSearch.eventGrid);
     let eventsHTML = "";
-
+    // Must be a valid instrument name
+    if (!dSearch.instrumentNames.get(instrumentName)) {
+        dSearch.eventListDiv.innerHTML = eventsHTML;
+        return;
+    }
     if (0 === events.length) {
-        eventsHTML = "There are no events for " + instrumentName;
+        eventsHTML = "There are no events for " + dSearch.instrumentNames.get(instrumentName);
     } else {
-        eventsHTML = "<p>" + instrumentName +
+        eventsHTML = "<p>" + dSearch.instrumentNames.get(instrumentName) +
             " is available on the following events:</p><ul>";
         for (let i = 0; i < events.length; i++) {
             eventsHTML += "<li>";
@@ -413,7 +440,7 @@ dSearch.displayFormEvents = function (instrumentName) {
         }
         eventsHTML += "<ul>";
     }
-    dSearch.eventGridDiv.innerHTML = eventsHTML;
+    dSearch.eventListDiv.innerHTML = eventsHTML;
 };
 
 // todo
@@ -484,6 +511,8 @@ dSearch.debugDictionarySearch = function () {
     console.log("upper=" + dSearch.upperCase);
     console.log("fuzzy=" + dSearch.fuzzy);
     console.log("limit to selection=" + dSearch.limitToSelection);
+    console.log("The Following Field Types:");
+    console.log(dSearch.searchFieldTypes);
 };
 
 /**
@@ -638,20 +667,18 @@ dSearch.today = function () {
 };
 
 dSearch.scroll = function () {
-    console.log("In Scroll Function Hide/Show");
     if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
         dSearch.scrollToTopBtn.style.display = "block";
-        console.log("In Scroll display Block");
-    } else {
-        console.log("In Scroll display none");
-        dSearch.scrollToTopBtn.style.display = "none";
     }
 };
 
 dSearch.scrollToTop = function () {
-    console.log("In Scroll Function to Top");
     document.body.scrollTop = 0; // For Safari
     document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+};
+
+dSearch.toggleEventTable = function () {
+    $("#eventTable2").toggle("medium");
 };
 
 

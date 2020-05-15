@@ -103,7 +103,10 @@ class DictionarySearch extends AbstractExternalModule
 
         $this->renderForm();
 
-        // $this->renderEventGrid();
+        if (REDCap::isLongitudinal()) {
+            $this->setEventTable();
+            echo $this->getEventTable();
+        }
 
         echo $this->renderScripts();
 
@@ -220,6 +223,15 @@ class DictionarySearch extends AbstractExternalModule
         return $js;
     }
 
+    private function getIsLongitudinalJS()
+    {
+        $isLongitudinal = "false";
+        if (REDCap::isLongitudinal()) {
+            $isLongitudinal = "true";
+        }
+        return '<script>dSearch.isLongitudinal = ' . $isLongitudinal . '</script>';
+    }
+
     private function renderScripts()
     {
         $dictionary = '<script>dSearch.dictionary = ' . $this->getDataDictionary() . ';</script>';
@@ -238,7 +250,8 @@ class DictionarySearch extends AbstractExternalModule
             $dictionary . PHP_EOL .
             $jsUrl . PHP_EOL .
             $designerUrl . PHP_EOL .
-            $canAccessDesignerJS . PHP_EOL;
+            $canAccessDesignerJS . PHP_EOL .
+            $this->getIsLongitudinalJS() . PHP_EOL;
         if (REDCap::isLongitudinal()) {
             $scripts .= $this->getEventGridJS($this->eventGrid) . PHP_EOL .
                 $this->getEventNamesJS() . PHP_EOL .
@@ -282,13 +295,16 @@ class DictionarySearch extends AbstractExternalModule
         }
 
         $this->eventGrid = [];
+        $this->eventGridFlip = [];
 
         foreach ($eventIds as $eventId) {
             $allFieldsByEvent = REDCap::getValidFieldsByEvents($project_id, $eventId);
             foreach ($this->completedInstrumentVars as $shortName => $complete) {
                 $this->eventGrid[$eventId][$shortName] = false;
+                $this->eventGridFlip[$shortName][$eventId] = false;
                 if (in_array($complete, $allFieldsByEvent)) {
                     $this->eventGrid[$eventId][$shortName] = true;
+                    $this->eventGridFlip[$shortName][$eventId] = true;
                 }
             }
         }
@@ -299,9 +315,12 @@ class DictionarySearch extends AbstractExternalModule
         return $this->eventGrid();
     }
 
-    public function renderEventGrid()
+    // TODO the show/hide button is problematic if included here.  What happens if you don't want it.  Do you include the js?
+    // However it does the show hide works out well if it the project is not longitudinal.
+    public function setEventTable()
     {
-        $eventTable = "<table class='table table-bordered'><tr><td>Event</td>";
+        $eventTable = "<button onclick='dSearch.toggleEventTable()' id='toggleEventTable' class='btn btn-defaultrc' title='Show/Hide Event Table'>Hide Event Table</button>" .
+            "<table class='table table-bordered' id='eventTable'><tr><td>Event</td>";
         foreach ($this->instrumentNames as $shortName => $longName) {
             $eventTable .= "<th data-form-name='" . $shortName . "'>" . $longName . '</th>';
         }
@@ -314,15 +333,43 @@ class DictionarySearch extends AbstractExternalModule
                 "</td>";
             foreach ($formEvents as $form => $hasEvent) {
                 if ($hasEvent) {
-                    $eventTable .= "<td>Y</td>";
+                    $eventTable .= "<td>&#10003;</td>";
                 } else {
-                    $eventTable .= "<td>N</td>";
+                    $eventTable .= "<td></td>";
                 }
             }
             $eventTable .= "</tr>";
         }
         $eventTable .= "</table>";
-        echo $eventTable;
+
+        $eventTable2 = "<div class='table-responsive col-12'>" .
+            "<button onclick='dSearch.toggleEventTable()' id='toggleEventTableBtn2' class='btn btn-defaultrc' title='Show/Hide Event Table'>Toggle Event Table Visibility</button><br>" .
+            "<table class='table table-bordered table-striped table-hover table-sm' id = 'eventTable2' > " .
+            "<thead><tr class='table-warning' ><th>Instruments \ Events</th>";
+        foreach ($this->eventLabels as $key => $label) {
+            $eventTable2 .= "<th>" . $label . "</th>";
+        }
+        $eventTable2 .= "</tr></thead><tbody> ";
+        foreach ($this->eventGridFlip as $instrumentShortName => $timePoints) {
+            $eventTable2 .= "<tr><td>" . $this->instrumentNames[$instrumentShortName] . "</td>";
+            foreach ($timePoints as $eventId => $hasEvent) {
+                $eventTable2 .= "<td>";
+                if ($hasEvent) {
+                    $eventTable2 .= " &#10003;";
+                }
+                $eventTable2 .= "</td>";
+            }
+
+            $eventTable2 .= "</tr>";
+        }
+
+        $eventTable2 .= "</tbody></table></div>";
+        $this->eventTable = $eventTable2;
+    }
+
+    private function getEventTable()
+    {
+        return $this->eventTable;
     }
 
     private function getEventGridJS($eventGrid)
