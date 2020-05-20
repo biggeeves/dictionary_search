@@ -235,13 +235,17 @@
             <fieldset>
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="all_var_info" id="limitResults" value="1"
-                           checked>
+                           onclick="dSearch.setLimitToSelection();">
                     <label class="form-check-label" for="limitResults">
                         Selected Categories Only
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="radio" name="all_var_info" id="allResults" value="0">
+                    <input class="form-check-input"
+                           type="radio" name="all_var_info" id="allResults"
+                           value="0"
+                           checked
+                           onclick="dSearch.setLimitToSelection();">
                     <label class="form-check-label" for="allResults">
                         All categories that are not blank (blanks are never displayed)
                     </label>
@@ -267,8 +271,7 @@
         </div>
     </div>
 </form>
-<!--TODO if it is NOT longitudinal do not show events area-->
-<div id="eventList" style="padding:25px;"></div>
 <div id="feedback" style="padding:25px;"></div>
+<div id="eventList" style="padding:25px;"></div>
 <div id="results" style="padding:25px;"></div>
 <button onclick="dSearch.scrollToTop()" id="scrollToTop" class="btn btn-defaultrc" title="Go to top">Top</button>
