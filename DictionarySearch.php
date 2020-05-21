@@ -360,37 +360,40 @@ class DictionarySearch extends AbstractExternalModule
     /**
      * Creates the eventTable that is visible on the page.
      */
+    //todo recreate this in javascript??
     public function setEventTable()
     {
-        /*        $eventTableColumnsForms = "<button onclick='dSearch.toggleEventTable()' id='toggleEventTable' class='btn btn-defaultrc'".
-                    " title='Show/Hide Event Table'>Hide Event Table</button>";
+        $containerOpen = "<div id='eventContainer'>";
+        $containerClose = "</div>";
+        $eventTableColumnsForms = "<div id='eventsByEvent' class='col-12'>" .
+            "<h3>Event Table <em>(Events are rows)</em></h3>" .
+            "<table class='table table-bordered table-striped table-hover table-sm table-responsive' id='eventTable'>" .
+            "<tr><th></th>";
+        foreach ($this->instrumentNames as $shortName => $longName) {
+            $eventTableColumnsForms .= "<th data-form-name='" . $shortName . "'>" . $longName . '</th>';
+        }
+        $eventTableColumnsForms .= "</tr>";
 
-                $eventTableColumnsForms .= "<table class='table table-bordered' id='eventTable'><tr><td>Event</td>";
-                foreach ($this->instrumentNames as $shortName => $longName) {
-                    $eventTableColumnsForms .= "<th data-form-name='" . $shortName . "'>" . $longName . '</th>';
+        foreach ($this->eventGrid as $eventId => $formEvents) {
+
+            $eventTableColumnsForms .= "<tr><td data-event='" . $eventId . "'>" .
+                $this->eventNames[$eventId] .
+                "</td>";
+            foreach ($formEvents as $form => $hasEvent) {
+                if ($hasEvent) {
+                    $eventTableColumnsForms .= "<td>&#10003;</td>";
+                } else {
+                    $eventTableColumnsForms .= "<td></td>";
                 }
-                $eventTableColumnsForms .= "</tr>";
+            }
+            $eventTableColumnsForms .= "</tr>";
+        }
+        $eventTableColumnsForms .= "</table></div>";
 
-                foreach ($this->eventGrid as $eventId => $formEvents) {
-
-                    $eventTableColumnsForms .= "<tr><td data-event='" . $eventId . "'>" .
-                        $this->eventNames[$eventId] .
-                        "</td>";
-                    foreach ($formEvents as $form => $hasEvent) {
-                        if ($hasEvent) {
-                            $eventTableColumnsForms .= "<td>&#10003;</td>";
-                        } else {
-                            $eventTableColumnsForms .= "<td></td>";
-                        }
-                    }
-                    $eventTableColumnsForms .= "</tr>";
-                }
-                $eventTableColumnsForms .= "</table>";*/
-
-        $eventTableColumnsEvents = "<div class='table-responsive col-12'>" .
-            "<button onclick='dSearch.toggleEventTable()' id='toggleEventTableBtn2' class='btn btn-defaultrc' title='Show/Hide Event Table'>Toggle Event Table Visibility</button><br>" .
-            "<table class='table table-bordered table-striped table-hover table-sm' id = 'eventTable2' > " .
-            "<thead><tr class='table-warning' ><th>Instruments \ Events</th>";
+        $eventTableColumnsEvents = "<div id='eventsByInstrument' class='col-12'>" .
+            "<h3>Event Table <em>(Instruments are rows)</em></h3>" .
+            "<table class='table table-bordered table-striped table-hover table-sm table-responsive' id = 'eventTable2' > " .
+            "<thead><tr class='table-warning' ><th></th>";
         foreach ($this->eventLabels as $key => $label) {
             $eventTableColumnsEvents .= "<th>" . $label . "</th>";
         }
@@ -409,7 +412,10 @@ class DictionarySearch extends AbstractExternalModule
         }
 
         $eventTableColumnsEvents .= "</tbody></table></div>";
-        $this->eventTable = $eventTableColumnsEvents;
+        $this->eventTable = $containerOpen .
+            $eventTableColumnsEvents .
+            $eventTableColumnsForms .
+            $containerClose;
     }
 
     private function getEventTable()

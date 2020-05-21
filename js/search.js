@@ -15,6 +15,8 @@ $, dSearch, designerUrl, canAccessDesigner, dictionary
 * bug: Search for [ and field type only Yes/No.  Returns calculated field in pid=33.  It shouldn't
 * If someone want a list of all SQL fields, how would they get that list?
 *
+* TODO: hide the event tab if it is not longitudinal or there are zero events
+* TODO: Add select page options to select all calculated fields, custom alignments etc.  People may want a list of those things.
 * */
 
 dSearch.debugger = true;
@@ -60,8 +62,12 @@ dSearch.initialize = function () {
     dSearch.fieldNames = dSearch.getFieldNames();
 
     dSearch.resultsDiv = document.getElementById("results");
+    dSearch.selectResultsDiv = document.getElementById("selectResults");
     dSearch.feedbackDiv = document.getElementById("feedback");
     dSearch.scrollToTopBtn = document.getElementById("scrollToTop");
+    dSearch.eventContainerDiv = document.getElementById("eventContainer");
+    dSearch.eventsByInstrumentDiv = document.getElementById("eventsByInstrument");
+    dSearch.formsForEventDiv = document.getElementById("formsForEvent");
 
     if (dSearch.isLongitudinal) {
         dSearch.eventTable = document.getElementById("eventTable");
@@ -76,6 +82,11 @@ dSearch.initialize = function () {
     dSearch.fieldValues = {};
 
     dSearch.addMapOptionsToSelect("instrument", dSearch.instrumentNames);
+
+    if (dSearch.isLongitudinal) {
+        dSearch.addMapOptionsToSelect("instrumentEvent", dSearch.instrumentNames);
+        dSearch.addMapOptionsToSelect("eventSelect", dSearch.eventLabels);
+    }
     // dSearch.addOptionsToSelect("instrument", dSearch.instrumentNames);
     dSearch.addOptionsToSelect("fieldNames", dSearch.fieldNames);
 
@@ -83,6 +94,10 @@ dSearch.initialize = function () {
 
     dSearch.handleEnter();
     document.getElementById("searchString").focus();
+
+    if (!dSearch.isLongitudinal) {
+        document.getElementById("nav-events-tab").style.display = "none";
+    }
 };
 
 
@@ -220,7 +235,7 @@ dSearch.showResults = function () {
     dSearch.resultsDisplay = "<div>";
 
     for (let result = 0; result < dSearch.results.length; result++) {
-        let fieldMetaDisplay = dSearch.displaySingleField(dSearch.results[result]);
+        let fieldMetaDisplay = dSearch.RenderFieldMeta(dSearch.results[result]);
         dSearch.resultsDisplay += "<div style='border:1px solid grey;padding:20px;'>" +
             fieldMetaDisplay +
             "</div>";
@@ -231,10 +246,9 @@ dSearch.showResults = function () {
 };
 
 /**
- * Add each field meta data to resultsDisplay
  * @param fieldMeta
  */
-dSearch.displaySingleField = function (fieldMeta) {
+dSearch.RenderFieldMeta = function (fieldMeta) {
     let fieldMetaDisplay = "";
     for (let propertyName in fieldMeta) {
         if (dSearch.limitToSelection === 1) {
@@ -253,20 +267,19 @@ dSearch.displaySingleField = function (fieldMeta) {
                 fieldCategoryLabel = fieldCategoryLabel.charAt(0).toUpperCase() + fieldCategoryLabel.slice(1);
 
                 if (propertyName === "field_name") {
-                    propertyValue = dSearch.getFieldNameForDisplay(fieldMeta.field_name, fieldMeta.form_name);
+                    propertyValue = dSearch.RenderFieldName(fieldMeta.field_name, fieldMeta.form_name);
                 } else if (propertyName === "form_name") {
-                    propertyValue = dSearch.getFormNameForDisplay(fieldMeta.form_name);
+                    propertyValue = dSearch.renderFormName(fieldMeta.form_name);
                 }
                 fieldMetaDisplay = fieldMetaDisplay + "<p><strong>" + fieldCategoryLabel + "</strong>: " + propertyValue + "</p>";
             }
         }
     }
 
-    // dSearch.feedbackDiv.style.display = "none";
     return fieldMetaDisplay;
 };
 
-dSearch.getFieldNameForDisplay = function (fieldName, InstrumentShortName) {
+dSearch.RenderFieldName = function (fieldName, InstrumentShortName) {
     let display = "";
     if (dSearch.canAccessDesigner) {
         display += "<a target=\"blank\" href=\"" +
@@ -282,7 +295,7 @@ dSearch.getFieldNameForDisplay = function (fieldName, InstrumentShortName) {
 };
 
 
-dSearch.getFormNameForDisplay = function (InstrumentShortName) {
+dSearch.renderFormName = function (InstrumentShortName) {
     let display = "";
     if (dSearch.canAccessDesigner) {
         display += "<a target=\"blank\" href=\"" +
@@ -425,33 +438,33 @@ dSearch.removeDuplicates = function (data) {
     return [...new Set(data)];
 };
 
-// TODO
-//  Refactor to get a list of fields that are in an instrument and return instead of set div.innerHTML
-
-dSearch.displayInstrument = function (instrumentName) {
-    dSearch.selectedResults = "";
-    dSearch.dictionary.forEach(function (field) {
-        if (field.form_name === instrumentName) {
-            dSearch.selectedResults += dSearch.displaySingleField(field);
-            dSearch.selectedResults += "<hr>";
-        }
-    });
-    dSearch.resultsDiv.innerHTML = dSearch.selectedResults;
-};
-
 dSearch.selectInstrument = function (instrumentName) {
     dSearch.feedbackDiv.style.display = "none";
     if (dSearch.isLongitudinal) {
-        dSearch.displayFormEvents(instrumentName);
+        dSearch.eventListDiv.innerHTML = dSearch.displayFormEvents(instrumentName);
     }
     dSearch.displayInstrument(instrumentName);
     dSearch.addFieldNamesToSelectByFormName(instrumentName);
 };
 
 
+dSearch.displayInstrument = function (instrumentName) {
+    dSearch.selectedResults = "";
+    dSearch.dictionary.forEach(function (field) {
+        if (field.form_name === instrumentName) {
+            dSearch.selectedResults += "<div class='row mt-1'>" +
+                "<div class='col shadow p-3 mb-5 bg-white rounded'>" +
+                dSearch.RenderFieldMeta(field) +
+                "</div></div>";
+        }
+    });
+    dSearch.selectResultsDiv.innerHTML = dSearch.selectedResults;
+};
+
+
 // todo return the event grid instead of set innerHTML
 dSearch.displayFormEvents = function (instrumentName) {
-    let events = dSearch.getEvents(instrumentName, dSearch.eventGrid);
+    let events = dSearch.getEventsForInstrument(instrumentName);
     let eventsHTML = "";
     // Must be a valid instrument name
     if (!dSearch.instrumentNames.get(instrumentName)) {
@@ -462,8 +475,9 @@ dSearch.displayFormEvents = function (instrumentName) {
     if (0 === events.length) {
         eventsHTML = "There are no events for " + dSearch.instrumentNames.get(instrumentName);
     } else {
-        eventsHTML = "<p>" + dSearch.instrumentNames.get(instrumentName) +
-            " is available on the following " + eventsCountLabel + ":</p><ul>";
+        eventsHTML = "<p><strong>" + dSearch.instrumentNames.get(instrumentName) +
+            " is available on the following " + eventsCountLabel + ":</strong></p>" +
+            "<ul>";
         for (let i = 0; i < events.length; i++) {
             eventsHTML += "<li>";
             let eventLabel = dSearch.getEventLabel(parseInt(events[i]));
@@ -476,7 +490,7 @@ dSearch.displayFormEvents = function (instrumentName) {
         }
         eventsHTML += "<ul>";
     }
-    dSearch.eventListDiv.innerHTML = eventsHTML;
+    return eventsHTML;
 };
 
 /* when all you know is the field name to display
@@ -484,10 +498,11 @@ dSearch.displayFormEvents = function (instrumentName) {
  */
 
 dSearch.displayField = function (fieldName) {
+    dSearch.selectResultsDiv.innerHTML = "";
     if (fieldName === "all") {
         dSearch.displayInstrument(document.getElementById("instrument").value);
     } else {
-        dSearch.resultsDiv.innerHTML = dSearch.getFieldDisplayByFieldName(fieldName);
+        dSearch.selectResultsDiv.innerHTML = dSearch.getFieldDisplayByFieldName(fieldName);
     }
 };
 
@@ -495,7 +510,7 @@ dSearch.getFieldDisplayByFieldName = function (fieldName) {
     let result = "";
     for (let i = 0; i < dSearch.dictionary.length; i++) {
         if (fieldName === dSearch.dictionary[i].field_name) {
-            result += dSearch.displaySingleField(dSearch.dictionary[i]);
+            result += dSearch.RenderFieldMeta(dSearch.dictionary[i]);
             break;
         }
     }
@@ -607,8 +622,11 @@ dSearch.handleEnter = function (e) {
     });
 };
 
-dSearch.getEvents = function (instrumentShortName, eventGrid) {
-    let instrumentEvents = [];
+// todo call this function again to get the events on the event page.
+
+dSearch.getEventsForInstrument = function (instrumentShortName) {
+    let eventIds = [];
+    let eventGrid = dSearch.eventGrid;
     for (let event in eventGrid) {
         if (!eventGrid.hasOwnProperty(event)) {
             continue;
@@ -622,15 +640,18 @@ dSearch.getEvents = function (instrumentShortName, eventGrid) {
             }
             if (instrumentShortName === instrument) {
                 if (instruments[instrument] === true) {
-                    instrumentEvents.push(event);
+                    eventIds.push(event);
                 }
             }
         }
     }
-    return instrumentEvents;
+    return eventIds;
 };
 
-// returns unique event name
+/**
+ * @param eventId integer must be passed as an integer not a string.
+ * returns event short name
+ */
 dSearch.getEventName = function (eventId) {
     if (dSearch.eventNames.get(eventId)) {
         return dSearch.eventNames.get(eventId);
@@ -639,7 +660,10 @@ dSearch.getEventName = function (eventId) {
     }
 };
 
-// returns event label (human readable)
+/**
+ * @param eventId integer must be passed as an integer not a string.
+ * returns event long name (label) which is human readable.
+ */
 dSearch.getEventLabel = function (eventId) {
     if (dSearch.eventLabels.get(eventId)) {
         return dSearch.eventLabels.get(eventId);
@@ -667,10 +691,29 @@ dSearch.scrollToTop = function () {
     document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
 };
 
-dSearch.toggleEventTable = function () {
-    $("#eventTable2").toggle("medium");
+
+dSearch.renderFormsForEvent = function (eventNumber) {
+    let instruments = dSearch.eventGrid[eventNumber];
+    if (instruments.length === 0) {
+        return "There are no instruments for that event.";
+    }
+    eventNumber = eventNumber * 1;
+    let eventLabel = dSearch.getEventLabel(eventNumber);
+    let display = "<h3>" + eventLabel +
+        " has the following instruments.</h3><ul>";
+    for (let formName in instruments) {
+        if (instruments[formName]) {
+            display += "<li>" + dSearch.instrumentNames.get(formName) + "</li>";
+        }
+    }
+    display += "</ul>";
+    dSearch.formsForEventDiv.innerHTML = display;
 };
 
+dSearch.renderEventsForForm = function (shortFormName) {
+    let display = dSearch.displayFormEvents(shortFormName);
+    dSearch.formsForEventDiv.innerHTML = display;
+};
 
 $(document).ready(function () {
     dSearch.initialize();
