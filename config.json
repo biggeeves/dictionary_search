@@ -10,6 +10,14 @@
       "institution": "Columbia University "
     }
   ],
+  "versions": [
+    {
+      "1.0": "Initial Release"
+    },
+    {
+      "1.1.1": "Inclusion of Event Grid"
+    }
+  ],
   "permissions": [
     "redcap_project_home_page"
   ],
