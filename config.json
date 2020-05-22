@@ -15,7 +15,7 @@
       "1.0": "Initial Release"
     },
     {
-      "1.1.1": "Inclusion of Event Grid"
+      "1.2.1": "Inclusion of Event Grid and Tabbed Display"
     }
   ],
   "permissions": [
