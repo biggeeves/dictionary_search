@@ -9,6 +9,7 @@ use \Security as Security;
 
 /** todo
  * Change custom alignment to appropriate drop downs (if needed)
+ * Request for developers: Make an external module for looking up the history of fields.
  **/
 
 /**
