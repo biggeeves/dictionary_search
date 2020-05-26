@@ -105,7 +105,8 @@ class DictionarySearch extends AbstractExternalModule
 
         if (REDCap::isLongitudinal()) {
             $this->setEventTable();
-            echo $this->getEventTable();
+            // echo 'this area is to be rendered by javascript';
+            // echo $this->getEventTable();
         }
 
         echo $this->renderScripts();
@@ -361,7 +362,6 @@ class DictionarySearch extends AbstractExternalModule
     /**
      * Creates the eventTable that is visible on the page.
      */
-    //todo recreate this in javascript??
     public function setEventTable()
     {
         $containerOpen = "<div id='eventContainer'>";

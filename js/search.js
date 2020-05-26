@@ -68,6 +68,7 @@ dSearch.initialize = function () {
     dSearch.eventContainerDiv = document.getElementById("eventContainer");
     dSearch.eventsByInstrumentDiv = document.getElementById("eventsByInstrument");
     dSearch.formsForEventDiv = document.getElementById("formsForEvent");
+    dSearch.xxxDiv = document.getElementById("xxx");
 
     if (dSearch.isLongitudinal) {
         dSearch.eventTable = document.getElementById("eventTable");
@@ -97,6 +98,9 @@ dSearch.initialize = function () {
 
     if (!dSearch.isLongitudinal) {
         document.getElementById("nav-events-tab").style.display = "none";
+    } else {
+        dSearch.setEventTable();
+        dSearch.xxxDiv.innerHTML = dSearch.eventTableView;
     }
 };
 
@@ -653,6 +657,7 @@ dSearch.getEventsForInstrument = function (instrumentShortName) {
  * returns event short name
  */
 dSearch.getEventName = function (eventId) {
+    eventId = eventId * 1;
     if (dSearch.eventNames.get(eventId)) {
         return dSearch.eventNames.get(eventId);
     } else {
@@ -714,6 +719,70 @@ dSearch.renderEventsForForm = function (shortFormName) {
     let display = dSearch.displayFormEvents(shortFormName);
     dSearch.formsForEventDiv.innerHTML = display;
 };
+
+
+dSearch.setEventTable = function setEventTable() {
+    let containerOpen = "<div id='eventContainer'>";
+    let containerClose = "</div>";
+    let eventTableColumnsForms = "<div id='eventsByEventX' class='col-12'>" +
+        "<h3>Event Table <em>(Events are rows)</em></h3>" +
+        "<table class='table table-bordered table-striped table-hover table-sm table-responsive' id='eventTableX'>" +
+        "<tr class='table-warning'><th></th>";
+    for (let [shortName, longName] of dSearch.instrumentNames) {
+        eventTableColumnsForms += "<th data-form-name='" + shortName + "'>" + longName + "</th>";
+    }
+    eventTableColumnsForms += "</tr>";
+
+    for (let eventId in dSearch.eventGrid) {
+        if (!dSearch.eventGrid.hasOwnProperty(eventId)) {
+            continue;
+        }
+        eventTableColumnsForms += "<tr><td>" + dSearch.getEventLabel(parseInt(eventId)) + "</td>";
+        let instruments = dSearch.eventGrid[eventId];
+
+        for (let name in instruments) {
+            eventTableColumnsForms += "<td>";
+            if (instruments[name] === true) {
+                eventTableColumnsForms += "&#10003;";
+            }
+            eventTableColumnsForms += "</td>";
+        }
+        eventTableColumnsForms += "</tr>";
+    }
+    eventTableColumnsForms += "</table></div>";
+
+    let eventTableColumnsEvents = "<div id='eventsByEventY' class='col-12'>" +
+        "<h3>Event Table <em>(Instrument Names are rows)</em></h3>" +
+        "<table class='table table-bordered table-striped table-hover table-sm table-responsive' id='eventTableY'>" +
+        "<tr class='table-warning'><th></th>";
+    for (let eventId in dSearch.eventGrid) {
+        eventTableColumnsEvents += "<th>" + dSearch.getEventLabel(parseInt(eventId)) + "</th>";
+    }
+    eventTableColumnsEvents += "</tr>";
+
+    dSearch.instrumentNames.forEach(function (v, k) {
+        let insturmentName = k;
+        console.log(insturmentName);
+        eventTableColumnsEvents += "<tr>";
+        eventTableColumnsEvents += "<td>" + v + "</td>";
+        for (let eventId in dSearch.eventGrid) {
+            eventTableColumnsEvents += "<td>";
+            console.log(dSearch.eventGrid[eventId][insturmentName]);
+            if (dSearch.eventGrid[eventId][insturmentName] === true) {
+                eventTableColumnsEvents += "&#10003;";
+            }
+            eventTableColumnsEvents += "</td>";
+        }
+        eventTableColumnsEvents += "</tr>";
+    });
+    eventTableColumnsEvents += "</table></div>";
+
+    dSearch.eventTableView = containerOpen +
+        eventTableColumnsForms +
+        eventTableColumnsEvents +
+        containerClose;
+};
+
 
 $(document).ready(function () {
     dSearch.initialize();
