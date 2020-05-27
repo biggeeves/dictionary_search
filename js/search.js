@@ -17,6 +17,7 @@ $, dSearch, designerUrl, canAccessDesigner, dictionary
 *
 * TODO: hide the event tab if it is not longitudinal or there are zero events
 * TODO: Add select page options to select all calculated fields, custom alignments etc.  People may want a list of those things.
+*  TODO: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  REcreate table.
 * */
 
 dSearch.debugger = true;
@@ -65,17 +66,6 @@ dSearch.initialize = function () {
     dSearch.selectResultsDiv = document.getElementById("selectResults");
     dSearch.feedbackDiv = document.getElementById("feedback");
     dSearch.scrollToTopBtn = document.getElementById("scrollToTop");
-    dSearch.eventContainerDiv = document.getElementById("eventContainer");
-    dSearch.eventsByInstrumentDiv = document.getElementById("eventsByInstrument");
-    dSearch.formsForEventDiv = document.getElementById("formsForEvent");
-    dSearch.xxxDiv = document.getElementById("xxx");
-
-    if (dSearch.isLongitudinal) {
-        dSearch.eventTable = document.getElementById("eventTable");
-        dSearch.toggleEventTableBtn = document.getElementById("toggleEventTable");
-        dSearch.eventListDiv = document.getElementById("eventList");
-    }
-
 
     dSearch.searchCategories = [];
     dSearch.searchFieldTypes = [];
@@ -99,8 +89,14 @@ dSearch.initialize = function () {
     if (!dSearch.isLongitudinal) {
         document.getElementById("nav-events-tab").style.display = "none";
     } else {
-        dSearch.setEventTable();
-        dSearch.xxxDiv.innerHTML = dSearch.eventTableView;
+        dSearch.eventListDiv = document.getElementById("eventList");
+        dSearch.formsForEventDiv = document.getElementById("formsForEvent");
+        dSearch.eventTableByEventsDiv = document.getElementById("eventTableByEvent");
+        dSearch.eventTableByInstrumentDiv = document.getElementById("eventTableByInstrument");
+        dSearch.setEventTableByEvent();
+        dSearch.setEventTableByInstrument();
+        dSearch.eventTableByEventsDiv.innerHTML = dSearch.eventTableByEvent;
+        dSearch.eventTableByInstrumentDiv.innerHTML = dSearch.eventTableByInstrument;
     }
 };
 
@@ -721,66 +717,63 @@ dSearch.renderEventsForForm = function (shortFormName) {
 };
 
 
-dSearch.setEventTable = function setEventTable() {
-    let containerOpen = "<div id='eventContainer'>";
-    let containerClose = "</div>";
-    let eventTableColumnsForms = "<div id='eventsByEventX' class='col-12'>" +
-        "<h3>Event Table <em>(Events are rows)</em></h3>" +
-        "<table class='table table-bordered table-striped table-hover table-sm table-responsive' id='eventTableX'>" +
+dSearch.setEventTableByEvent = function setEventTableByEvent() {
+    let table = "<h3>Event Table <em>(Events are rows)</em></h3>" +
+        "<table class='table table-bordered table-striped table-hover table-sm table-responsive event-table'>" +
         "<tr class='table-warning'><th></th>";
     for (let [shortName, longName] of dSearch.instrumentNames) {
-        eventTableColumnsForms += "<th data-form-name='" + shortName + "'>" + longName + "</th>";
+        table += "<th data-form-name='" + shortName + "'>" + longName + "</th>";
     }
-    eventTableColumnsForms += "</tr>";
+    table += "</tr>";
 
     for (let eventId in dSearch.eventGrid) {
         if (!dSearch.eventGrid.hasOwnProperty(eventId)) {
             continue;
         }
-        eventTableColumnsForms += "<tr><td>" + dSearch.getEventLabel(parseInt(eventId)) + "</td>";
+        table += "<tr><td>" + dSearch.getEventLabel(parseInt(eventId)) + "</td>";
         let instruments = dSearch.eventGrid[eventId];
 
         for (let name in instruments) {
-            eventTableColumnsForms += "<td>";
+            table += "<td>";
             if (instruments[name] === true) {
-                eventTableColumnsForms += "&#10003;";
+                table += "&#10003;";
             }
-            eventTableColumnsForms += "</td>";
+            table += "</td>";
         }
-        eventTableColumnsForms += "</tr>";
+        table += "</tr>";
     }
-    eventTableColumnsForms += "</table></div>";
+    table += "</table>";
 
-    let eventTableColumnsEvents = "<div id='eventsByEventY' class='col-12'>" +
-        "<h3>Event Table <em>(Instrument Names are rows)</em></h3>" +
-        "<table class='table table-bordered table-striped table-hover table-sm table-responsive' id='eventTableY'>" +
+    dSearch.eventTableByEvent = table;
+};
+
+dSearch.setEventTableByInstrument = function () {
+    let table = "<h3>Event Table <em>(Instrument Names are rows)</em></h3>" +
+        "<table class='table table-bordered table-striped table-hover table-sm table-responsive event-table'>" +
         "<tr class='table-warning'><th></th>";
     for (let eventId in dSearch.eventGrid) {
-        eventTableColumnsEvents += "<th>" + dSearch.getEventLabel(parseInt(eventId)) + "</th>";
+        table += "<th>" + dSearch.getEventLabel(parseInt(eventId)) + "</th>";
     }
-    eventTableColumnsEvents += "</tr>";
+    table += "</tr>";
 
     dSearch.instrumentNames.forEach(function (v, k) {
         let insturmentName = k;
         console.log(insturmentName);
-        eventTableColumnsEvents += "<tr>";
-        eventTableColumnsEvents += "<td>" + v + "</td>";
+        table += "<tr>";
+        table += "<td>" + v + "</td>";
         for (let eventId in dSearch.eventGrid) {
-            eventTableColumnsEvents += "<td>";
+            table += "<td>";
             console.log(dSearch.eventGrid[eventId][insturmentName]);
             if (dSearch.eventGrid[eventId][insturmentName] === true) {
-                eventTableColumnsEvents += "&#10003;";
+                table += "&#10003;";
             }
-            eventTableColumnsEvents += "</td>";
+            table += "</td>";
         }
-        eventTableColumnsEvents += "</tr>";
+        table += "</tr>";
     });
-    eventTableColumnsEvents += "</table></div>";
+    table += "</table>";
 
-    dSearch.eventTableView = containerOpen +
-        eventTableColumnsForms +
-        eventTableColumnsEvents +
-        containerClose;
+    dSearch.eventTableByInstrument = table;
 };
 
 
