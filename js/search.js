@@ -11,6 +11,11 @@ $, dSearch, designerUrl, canAccessDesigner, dictionary
 *  Does output need to be properly escaped? (looking for double quotes).
 *  When searching for text all returned values are strong, when only search criteria should be
 *     strong when displaying ALL Information
+* - simplify the dictionarySearch by removing blanks properties.
+* - Easily find all calculated field types.
+* - Easily find all sql field types.
+* - Easily find all sliders field types.
+* - Easily find all file field types.
 *
 * bug: Search for [ and field type only Yes/No.  Returns calculated field in pid=33.  It shouldn't
 * If someone want a list of all SQL fields, how would they get that list?
@@ -21,6 +26,7 @@ $, dSearch, designerUrl, canAccessDesigner, dictionary
 * */
 
 dSearch.debugger = true;
+dSearch.version = "v9.9.9";
 
 dSearch.initialize = function () {
     dSearch.dictionaryFields = [
@@ -123,12 +129,13 @@ dSearch.matchCriteria = function (dictionaryRow) {
     });
 
     if (!dSearch.searchFieldTypes.includes(dictionaryRow.field_type)) {
-        console.log(dSearch.searchFieldTypes);
-        console.log("got a match: " + dictionaryRow.field_type);
         return false;
     }
 
-    // console.log(dictionaryRow.field_name);
+    if (dSearch.debugger) {
+        console.log(dictionaryRow.field_name);
+    }
+
 
     for (let property of dSearch.searchCategories) {
 
@@ -144,7 +151,10 @@ dSearch.matchCriteria = function (dictionaryRow) {
             matchProperties[property] = true;
         } else if (property === "matrix_ranking" && valueOfField === "y") {
             matchProperties[property] = true;
-        }
+        } /* TODO check if calculation type is checked allow zero length searches
+        else if (property === "calculates" && valueOfField === "y") {
+            matchProperties[property] = true;
+        }*/
 
         if (dSearch.upperCase === 1) {
             valueOfField = valueOfField.toUpperCase();
@@ -334,14 +344,14 @@ dSearch.toggleAllCategories = function () {
  *  if any category is checked, uncheck all_categories
  *
  */
-dSearch.checkAllCategories = function (action) {
-    dSearch.dictionaryFields.forEach(function (value, key, map) {
-        dSearch.syncToggleAllCategories(action, value);
+dSearch.checkAllCategories = function (state) {
+    dSearch.dictionaryFields.forEach(function (element, key, map) {
+        dSearch.syncToggleAllCategories(state, element);
     });
 };
 
-dSearch.syncToggleAllCategories = function (action, value) {
-    document.getElementById(value).checked = action;
+dSearch.syncToggleAllCategories = function (state, element) {
+    document.getElementById(element).checked = state;
 };
 
 
@@ -522,6 +532,8 @@ dSearch.getFieldDisplayByFieldName = function (fieldName) {
  */
 dSearch.debugDictionarySearch = function () {
     console.clear();
+    console.log("Debugger is on.");
+    document.getElementById("dSearchVersion").innerText = dSearch.version;
     console.log("searchText=" + dSearch.searchText);
     console.log("upper=" + dSearch.upperCase);
     console.log("fuzzy=" + dSearch.fuzzy);
@@ -717,7 +729,7 @@ dSearch.renderEventsForForm = function (shortFormName) {
 };
 
 
-dSearch.setEventTableByEvent = function setEventTableByEvent() {
+dSearch.setEventTableByEvent = function () {
     let table = "<h3>Event Table <em>(Events are rows)</em></h3>" +
         "<table class='table table-bordered table-striped table-hover table-sm table-responsive event-table'>" +
         "<tr class='table-warning'><th></th>";
@@ -776,6 +788,14 @@ dSearch.setEventTableByInstrument = function () {
     dSearch.eventTableByInstrument = table;
 };
 
+dSearch.getCalculatedFields = function () {
+    dSearch.results = dSearch.dictionary.filter(dSearch.matchCriteria);
+};
+
+dSearch.updateAllFieldTypes = function () {
+    document.getElementById("all_field_types").checked = false;
+};
+
 
 $(document).ready(function () {
     dSearch.initialize();
@@ -784,5 +804,4 @@ $(document).ready(function () {
     window.onscroll = function () {
         dSearch.scroll();
     };
-
 });

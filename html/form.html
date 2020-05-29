@@ -20,7 +20,7 @@
 </style>
 <div class="row">
     <div class="col-9">
-        <p data-dSearchVersion="v9.9.9" class="text-muted-more">Dictionary Search</p>
+        <p data-dSearchVersion="v9.9.9" class="text-muted-more">Dictionary <span id="dSearchVersion"></span></p>
         <nav>
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
                 <a class="nav-item nav-link active" id="nav-search-tab" data-toggle="tab" href="#nav-search" role="tab"
@@ -102,7 +102,7 @@
                                             <input class="form-check-input" name="select_choices_or_calculations"
                                                    id="select_choices_or_calculations" type="checkbox">
                                             <label class="form-check-label"
-                                                   for="select_choices_or_calculations">Select Choices</label>
+                                                   for="select_choices_or_calculations">Select Choices &#47; Calculations</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input"
@@ -193,58 +193,65 @@
                                         </div>
                                         <div class="col">
                                             <div class="form-check field-type">
-                                                <input class="form-check-input" type="checkbox" name="text" id="text">
+                                                <input class="form-check-input" type="checkbox" name="text" id="text"
+                                                       onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="text">Text</label>
                                             </div>
                                             <div class="form-check field-type">
-                                                <input class="form-check-input" type="checkbox" name="notes" id="notes">
+                                                <input class="form-check-input" type="checkbox" name="notes" id="notes"
+                                                       onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="notes">Notes</label>
                                             </div>
                                             <div class="form-check field-type">
-                                                <input class="form-check-input" type="checkbox" name="calc" id="calc">
+                                                <input class="form-check-input" type="checkbox" name="calc" id="calc"
+                                                       onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="calc">Calculations</label>
                                             </div>
                                             <div class="form-check field-type">
                                                 <input class="form-check-input" type="checkbox" name="dropdown"
-                                                       id="dropdown">
+                                                       id="dropdown" onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="dropdown">Dropdowns</label>
                                             </div>
                                             <div class="form-check field-type">
-                                                <input class="form-check-input" type="checkbox" name="radio" id="radio">
+                                                <input class="form-check-input" type="checkbox" name="radio" id="radio"
+                                                       onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="radio">Radios</label>
                                             </div>
                                             <div class="form-check field-type">
                                                 <input class="form-check-input" type="checkbox" name="checkbox"
-                                                       id="checkbox">
+                                                       id="checkbox" onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="checkbox">Checkbox</label>
                                             </div>
                                         </div>
                                         <div class="col">
                                             <div class="form-check field-type">
-                                                <input class="form-check-input" type="checkbox" name="yesno" id="yesno">
+                                                <input class="form-check-input" type="checkbox" name="yesno" id="yesno"
+                                                       onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="yesno">Yes/No</label>
                                             </div>
                                             <div class="form-check field-type">
                                                 <input class="form-check-input" type="checkbox" name="truefalse"
-                                                       id="truefalse">
+                                                       id="truefalse" onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="truefalse">True False</label>
                                             </div>
                                             <div class="form-check field-type">
-                                                <input class="form-check-input" type="checkbox" name="file" id="file">
+                                                <input class="form-check-input" type="checkbox" name="file" id="file"
+                                                       onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="file">File</label>
                                             </div>
                                             <div class="form-check field-type">
                                                 <input class="form-check-input" type="checkbox" name="slider"
-                                                       id="slider">
+                                                       id="slider" onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="slider">Slider</label>
                                             </div>
                                             <div class="form-check field-type">
                                                 <input class="form-check-input" type="checkbox" name="descriptive"
-                                                       id="descriptive">
+                                                       id="descriptive" onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="descriptive">Descriptive</label>
                                             </div>
                                             <div class="form-check field-type">
-                                                <input class="form-check-input" type="checkbox" name="sql" id="sql">
+                                                <input class="form-check-input" type="checkbox" name="sql" id="sql"
+                                                       onchange="dSearch.updateAllFieldTypes();">
                                                 <label class="form-check-label" for="sql">SQL</label>
                                             </div>
                                         </div>
@@ -341,6 +348,13 @@
                         </select>
                     </div>
                 </div>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <button class="btn btn-primary" name="calcFields" id="calcFields"
+                                onclick="dSearch.displayCalcFields();">Calculated
+                        </button>
+                    </div>
+                </div>
                 <div id="eventList" style="padding:25px;"></div>
                 <div id="selectResults" style="padding:25px;"></div>
             </div>
@@ -374,6 +388,11 @@
                 <div class="row  mt-3">
                     <div class="col-12">
                         <div id="eventTableByInstrument"></div>
+                    </div>
+                </div>
+                <div class="row  mt-3">
+                    <div class="col-12">
+                        <div id="event"></div>
                     </div>
                 </div>
             </div>
