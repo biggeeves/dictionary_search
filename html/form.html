@@ -349,9 +349,27 @@
                     </div>
                 </div>
                 <div class="row mt-3">
+                    <div class="col-3">
+                        <label class="font-weight-bolder" for="selectFieldType">Select a Field Type</label>
+                        <select class="custom-select" name="selectFieldType" id="selectFieldType"
+                                onchange="dSearch.displayFieldsByType(this.value);">
+                            <option value="text">Text</option>
+                            <option value="notes">Notes</option>
+                            <option value="calc">Calc</option>
+                            <option value="dropdown">Dropdown</option>
+                            <option value="radio">Radio</option>
+                            <option value="checkbox">Checkbox</option>
+                            <option value="yesno">YesNo</option>
+                            <option value="truefalse">TrueFalse</option>
+                            <option value="file">File</option>
+                            <option value="slider">Slider</option>
+                            <option value="descriptive">Descriptive</option>
+                            <option value="sql">SQL</option>
+                        </select>
+                    </div>
                     <div class="col-6">
-                        <button class="btn btn-primary" name="calcFields" id="calcFields"
-                                onclick="dSearch.displayCalcFields();">Calculated
+                        <button class="btn btn-primary btn-sm" name="calcFieldInRadio" id="calcFieldInRadio"
+                                onclick="dSearch.displayRadiosInCalcFields();">Radios in Calc Fields
                         </button>
                     </div>
                 </div>

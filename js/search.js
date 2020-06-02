@@ -22,7 +22,8 @@ $, dSearch, designerUrl, canAccessDesigner, dictionary
 *
 * TODO: hide the event tab if it is not longitudinal or there are zero events
 * TODO: Add select page options to select all calculated fields, custom alignments etc.  People may want a list of those things.
-*  TODO: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  REcreate table.
+* TODO: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  REcreate table.
+* TODO bug: Select Page: Select any instrument, select all fields select file type, results my return undefined in Offspring project.
 * */
 
 dSearch.debugger = true;
@@ -67,6 +68,8 @@ dSearch.initialize = function () {
 
     dSearch.instruments = dSearch.getFormNames();
     dSearch.fieldNames = dSearch.getFieldNames();
+    // todo refactor; use get and set to variable.
+    dSearch.setFieldsByType();
 
     dSearch.resultsDiv = document.getElementById("results");
     dSearch.selectResultsDiv = document.getElementById("selectResults");
@@ -191,7 +194,6 @@ dSearch.submitted = function () {
     dSearch.setAllFieldTypes();
     dSearch.resultsDiv.innerHTML = "";
     let feedBack = dSearch.today();
-    console.log(feedBack);
     dSearch.feedbackDiv.innerHTML = feedBack;
 
     dSearch.fuzzy = Number(document.querySelector("input[name=\"fuzzy\"]:checked").value);
@@ -216,7 +218,6 @@ dSearch.submitted = function () {
     Limit the number for fields TYPES to just the selected fields..
      */
     dSearch.setSearchFieldTypes();
-    console.log(dSearch.setSearchFieldTypes);
 
     if (dSearch.upperCase === 1) {
         dSearch.searchText = dSearch.searchText.toUpperCase();
@@ -246,7 +247,7 @@ dSearch.showResults = function () {
 
     for (let result = 0; result < dSearch.results.length; result++) {
         let fieldMetaDisplay = dSearch.RenderFieldMeta(dSearch.results[result]);
-        dSearch.resultsDisplay += "<div style='border:1px solid grey;padding:20px;'>" +
+        dSearch.resultsDisplay += '<div class="col shadow p-3 mb-5 bg-white rounded">' +
             fieldMetaDisplay +
             "</div>";
     }
@@ -256,7 +257,7 @@ dSearch.showResults = function () {
 };
 
 /**
- * @param fieldMeta
+ * @param fieldMeta  all meta data from the data dictionary for the field
  */
 dSearch.RenderFieldMeta = function (fieldMeta) {
     let fieldMetaDisplay = "";
@@ -459,16 +460,18 @@ dSearch.selectInstrument = function (instrumentName) {
 
 
 dSearch.displayInstrument = function (instrumentName) {
-    dSearch.selectedResults = "";
+    let resultHTML = "<div><h3 class='text-center'><em> " +
+        dSearch.instrumentNames.get(instrumentName) +
+        "</em></h3></div>";
     dSearch.dictionary.forEach(function (field) {
         if (field.form_name === instrumentName) {
-            dSearch.selectedResults += "<div class='row mt-1'>" +
+            resultHTML += "<div class='row mt-1'>" +
                 "<div class='col shadow p-3 mb-5 bg-white rounded'>" +
                 dSearch.RenderFieldMeta(field) +
                 "</div></div>";
         }
     });
-    dSearch.selectResultsDiv.innerHTML = dSearch.selectedResults;
+    dSearch.selectResultsDiv.innerHTML = resultHTML;
 };
 
 
@@ -508,13 +511,18 @@ dSearch.displayFormEvents = function (instrumentName) {
  */
 
 dSearch.displayField = function (fieldName) {
-    dSearch.selectResultsDiv.innerHTML = "";
+    let resultHTML = "<div><h3 class='text-center'><em> " +
+        fieldName +
+        "</em></h3></div>";
     if (fieldName === "all") {
         dSearch.displayInstrument(document.getElementById("instrument").value);
     } else {
-        dSearch.selectResultsDiv.innerHTML = dSearch.getFieldDisplayByFieldName(fieldName);
+        resultHTML += dSearch.getFieldDisplayByFieldName(fieldName);
     }
+    dSearch.selectResultsDiv.innerHTML = resultHTML;
 };
+
+// todo consider making lookup table for field name and row in data dictionary; ie index it.
 
 dSearch.getFieldDisplayByFieldName = function (fieldName) {
     let result = "";
@@ -644,7 +652,6 @@ dSearch.getEventsForInstrument = function (instrumentShortName) {
             continue;
         }
         let instruments = eventGrid[event];
-        // console.log(instruments);
         for (let instrument in instruments) {
             // skip loop if the property is from prototype
             if (!instruments.hasOwnProperty(instrument)) {
@@ -770,12 +777,10 @@ dSearch.setEventTableByInstrument = function () {
 
     dSearch.instrumentNames.forEach(function (v, k) {
         let insturmentName = k;
-        console.log(insturmentName);
         table += "<tr>";
         table += "<td>" + v + "</td>";
         for (let eventId in dSearch.eventGrid) {
             table += "<td>";
-            console.log(dSearch.eventGrid[eventId][insturmentName]);
             if (dSearch.eventGrid[eventId][insturmentName] === true) {
                 table += "&#10003;";
             }
@@ -788,14 +793,110 @@ dSearch.setEventTableByInstrument = function () {
     dSearch.eventTableByInstrument = table;
 };
 
-dSearch.getCalculatedFields = function () {
-    dSearch.results = dSearch.dictionary.filter(dSearch.matchCriteria);
+/** todo make updating the results area a function that accepts the data to be displayed
+ * This way the same targeted div is always updated.
+ */
+//
+
+dSearch.renderSelectedResults = function (results) {
+    dSearch.selectResultsDiv.innerHTML = results;
+};
+
+dSearch.displayCalcFields = function () {
+    let searchField = "lh5tv_en";  // sample field to find in a calculation
+
+//    dSearch.setCalculatedFields();
+    let resultHTML = "";
+    for (const field in dSearch.fieldsByType.calc) {
+        let field_name = dSearch.fieldsByType.calc[field];
+        /** todo this was working when this was searching for a field name
+         but now all we have is the field name and nothing of the properties.
+         let calcText = dSearch.calculatedFields[field].select_choices_or_calculations;
+         let containedFields = calcText.match(/\[(.*?)\]/g);
+         let hasText = false;
+         for (let i = 0; i < containedFields.length; i++) {
+            containedFields[i] = containedFields[i].replace("[", "").replace("]", "");
+            if (searchField === containedFields[i]) {
+                hasText = true;
+            }
+        }
+         if (!hasText) {
+            continue;
+        }
+         */
+        resultHTML += dSearch.getFieldDisplayByFieldName(field_name);
+    }
+    dSearch.renderSelectedResults(resultHTML);
+};
+
+dSearch.displayFieldsByType = function (type) {
+    let resultHTML = "<div><h3 class='text-center'><em>" + type + "</em> fields</h3></div>";
+    let count = dSearch.fieldsByType[type].length;
+    if (count === 0) {
+        resultHTML += "<div><h3 class='text-center'>There are no " + type + " fields.</h3></div>";
+    } else {
+        resultHTML += "<div><h3 class='text-center'>There ";
+        if (count === 1) {
+            resultHTML += "is 1 field.";
+        } else {
+            resultHTML += "are " + count + " fields.";
+        }
+        resultHTML += "</h3></div>";
+        for (const field in dSearch.fieldsByType[type]) {
+            let field_name = dSearch.fieldsByType[type][field];
+            /** todo this was working when this was searching for a field name
+             but now all we have is the field name and nothing of the properties.
+             let calcText = dSearch.calculatedFields[field].select_choices_or_calculations;
+             let containedFields = calcText.match(/\[(.*?)\]/g);
+             let hasText = false;
+             for (let i = 0; i < containedFields.length; i++) {
+            containedFields[i] = containedFields[i].replace("[", "").replace("]", "");
+            if (searchField === containedFields[i]) {
+                hasText = true;
+            }
+        }
+             if (!hasText) {
+            continue;
+        }
+             */
+            resultHTML += "<div class=\"col shadow p-3 mb-5 bg-white rounded\">" +
+                dSearch.getFieldDisplayByFieldName(field_name) +
+                "</div>";
+        }
+    }
+    dSearch.renderSelectedResults(resultHTML);
+};
+
+// not used but may be helpful in the future.  6/1/2020
+dSearch.searchRowByFieldType = function (dictionaryRow, fieldType) {
+    if (dictionaryRow.field_type === fieldType) {
+        return true;
+    }
+    return false;
+};
+
+dSearch.setFieldsByType = function () {
+    dSearch.fieldsByType = {};
+    for (const type of dSearch.redcap_field_types) {
+        dSearch.fieldsByType[type] = [];
+    }
+
+    for (let field in dSearch.dictionary) {
+        dSearch.groupByFieldType(dSearch.dictionary[field]);
+    }
+};
+dSearch.groupByFieldType = function (field) {
+    dSearch.fieldsByType[field.field_type].push(field.field_name);
+};
+
+dSearch.displayRadiosInCalcFields = function () {
+    // 1) get Calculated fields.  Look through all calc fields for ones that reference radio or selects
+    dSearch.renderSelectedResults(dSearch.fieldsByType.calc);
 };
 
 dSearch.updateAllFieldTypes = function () {
     document.getElementById("all_field_types").checked = false;
 };
-
 
 $(document).ready(function () {
     dSearch.initialize();
