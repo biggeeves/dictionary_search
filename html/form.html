@@ -337,14 +337,14 @@
                         <label class="font-weight-bolder" for="instrument">Select an Instrument</label>
                         <select class="custom-select" name="instrument" id="instrument"
                                 onchange="dSearch.selectInstrument(this.value);">
-                            <option value="any">Any</option>
+                            <option value="dSearchAny">Any</option>
                         </select>
                     </div>
                     <div class="col-6">
                         <label class="font-weight-bolder" for="fieldNames">Select a Field</label>
                         <select class="custom-select" name="fieldNames" id="fieldNames"
                                 onchange="dSearch.displayField(this.value);">
-                            <option value="all">All</option>
+                            <option value="dSearchAll">All</option>
                         </select>
                     </div>
                 </div>
@@ -390,6 +390,9 @@
                             <select class="custom-select" name="eventSelect" id="eventSelect"
                                     onchange="dSearch.renderFormsForEvent(this.value);">
                             </select>
+                        </div>
+                        <div class="col-3">
+                            <span id="designate_forms_url">Designate Forms Link</span>
                         </div>
                     </div>
                 </div>

@@ -10,6 +10,7 @@ use \Security as Security;
 /** todo
  * Change custom alignment to appropriate drop downs (if needed)
  * Request for developers: Make an external module for looking up the history of fields.
+ * should data dictionary us htmlspecialchars() and display everything as coded or visually as it would be displayed?
  **/
 
 /**
@@ -178,6 +179,17 @@ class DictionarySearch extends AbstractExternalModule
     }
 
     /**
+     * URL to designate instruments for my events
+     *
+     * @return string Event grid URL including REDCap Base, Version and Project ID.
+     */
+    private function getDesignateFormsURL()
+    {
+        global $redcap_base_url, $redcap_version, $project_id;
+        return $redcap_base_url . 'redcap_v' . $redcap_version . '/Design/designate_forms.php?pid=' . $project_id;
+    }
+
+    /**
      * echo contents of form.html.
      * @return string
      */
@@ -256,6 +268,7 @@ class DictionarySearch extends AbstractExternalModule
         $dictionary = '<script>dSearch.dictionary = ' . $this->getDataDictionaryJSON() . ';</script>';
         $jsUrl = '<script src="' . $this->getJSUrl() . '"></script>';
         $designerUrl = '<script>dSearch.designerUrl="' . $this->getOnlineDesignerURL() . '";</script>';
+        $designateFormsUrl = '<script>dSearch.designateFormsUrl="' . $this->getDesignateFormsURL() . '";</script>';
         $canAccessDesignerJS = '<script>dSearch.canAccessDesigner=';
         if ($this->canAccessDesigner) {
             $canAccessDesignerJS .= 'true';
@@ -269,6 +282,7 @@ class DictionarySearch extends AbstractExternalModule
             $dictionary . PHP_EOL .
             $jsUrl . PHP_EOL .
             $designerUrl . PHP_EOL .
+            $designateFormsUrl . PHP_EOL .
             $canAccessDesignerJS . PHP_EOL .
             $this->getIsLongitudinalJS() . PHP_EOL;
         if (REDCap::isLongitudinal()) {
