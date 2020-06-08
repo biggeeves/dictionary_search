@@ -10,15 +10,16 @@ dSearch.instrumentNames
 /*eslint-env browser*/
 'use strict';
 /*
-* TODO:
-*  parse out value labels
-*  Does output need to be properly escaped? (looking for double quotes).
-*  When searching for text all returned values are strong, when only search criteria should be
-*     strong when displaying ALL Information
-* - simplify the dictionarySearch by removing blanks properties.
+* todo:  parse out value labels
+*  todo: Does output need to be escaped? (looking for double quotes).
 *
-* TODO: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  REcreate table.
-*  todo: When selecting a field type and an instrument is selected should results be limited to chosen instrument?
+* todo: Ability to search text fields by validation type.
+*
+* todo: simplify the dictionarySearch by removing blanks properties.
+*  todo: Field Names and Form Names do not have styling applied when they are found because they are proceesed into links to the data dictionary.
+*   -Is there a way to apply styling after applying the link
+*
+* todo: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  REcreate table.
 * */
 
 dSearch.debugger = true;
@@ -136,7 +137,7 @@ dSearch.matchCriteria = function (dictionaryRow) {
     }
 
     if (dSearch.debugger) {
-        console.log(dictionaryRow.field_name);
+        // console.log(dictionaryRow.field_name);
     }
 
 
@@ -260,8 +261,12 @@ dSearch.showResults = function () {
  * @param fieldMeta  all meta data from the data dictionary for the field
  */
 dSearch.RenderFieldMeta = function (fieldMeta) {
-    let fieldMetaDisplay = "";
-    for (let propertyName in fieldMeta) {
+    let metaHTML = "";
+    let properties = Object.entries(fieldMeta);
+    let regexSplit = new RegExp(dSearch.searchText, "i");
+    for (let i = 0; i < properties.length; i++) {
+        let propertyName = properties[i][0];
+        let propertyValue = properties[i][1];
         if (dSearch.limitToSelection === 1) {
             if (dSearch.searchCategories.includes(propertyName) === false &&
                 propertyName !== "field_name" &&
@@ -269,25 +274,27 @@ dSearch.RenderFieldMeta = function (fieldMeta) {
                 continue;
             }
         }
-
-        if (fieldMeta.hasOwnProperty(propertyName)) {
-            if (fieldMeta[propertyName] !== "") {
-                let propertyValue = fieldMeta[propertyName].split(dSearch.searchText).join("<span class='dSearch-bolder'>" + dSearch.searchText + "</span>");
-
-                let fieldCategoryLabel = propertyName.replace(/_/g, " ");
-                fieldCategoryLabel = fieldCategoryLabel.charAt(0).toUpperCase() + fieldCategoryLabel.slice(1);
-
-                if (propertyName === "field_name") {
-                    propertyValue = dSearch.RenderFieldName(fieldMeta.field_name, fieldMeta.form_name);
-                } else if (propertyName === "form_name") {
-                    propertyValue = dSearch.renderFormName(fieldMeta.form_name);
-                }
-                fieldMetaDisplay = fieldMetaDisplay + "<p><strong>" + fieldCategoryLabel + "</strong>: " + propertyValue + "</p>";
+        if (propertyValue !== "") {
+            let propertyValueHTML = "";
+            if (dSearch.searchCategories.includes(propertyName)) {
+                propertyValueHTML = propertyValue.split(regexSplit).join("<span class='dSearch-bolder'>" + dSearch.searchText + "</span>");
+            } else {
+                propertyValueHTML = propertyValue;
             }
+
+            let categoryLabel = propertyName.replace(/_/g, " ");
+            categoryLabel = categoryLabel.charAt(0).toUpperCase() + categoryLabel.slice(1);
+
+            if (propertyName === "field_name") {
+                propertyValueHTML = dSearch.RenderFieldName(fieldMeta.field_name, fieldMeta.form_name);
+            } else if (propertyName === "form_name") {
+                propertyValueHTML = dSearch.renderFormName(fieldMeta.form_name);
+            }
+            metaHTML = metaHTML + "<p><strong>" + categoryLabel + "</strong>: " + propertyValueHTML + "</p>";
         }
     }
 
-    return fieldMetaDisplay;
+    return metaHTML;
 };
 
 dSearch.RenderFieldName = function (fieldName, InstrumentShortName) {
@@ -525,15 +532,12 @@ dSearch.displayFormEvents = function (instrumentName) {
  */
 
 dSearch.displayField = function (fieldName) {
-    console.log(fieldName);
     document.getElementById("selectFieldType").options[0].selected = true;
     let resultHTML = "<div><h3 class='text-center'><em> " +
         fieldName +
         "</em></h3></div>";
     if (fieldName === "dSearchAll") {
-        console.log("dSearchAll here");
         dSearch.displayInstrument(document.getElementById("instrument").value);
-        console.log("after dSearchAll");
     } else {
         resultHTML += dSearch.getFieldDisplayByFieldName(fieldName);
         dSearch.selectResultsDiv.innerHTML = resultHTML;
@@ -563,7 +567,9 @@ dSearch.debugDictionarySearch = function () {
     console.log("upper=" + dSearch.upperCase);
     console.log("fuzzy=" + dSearch.fuzzy);
     console.log("limit to selection=" + dSearch.limitToSelection);
-    console.log("The Following Field Types:");
+    console.log("The categories to search:");
+    console.log(dSearch.searchCategories);
+    console.log("Field types to search:");
     console.log(dSearch.searchFieldTypes);
 };
 
