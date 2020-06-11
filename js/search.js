@@ -26,8 +26,8 @@ dSearch.instrumentNames
 * todo: include sample sample schemas
 * */
 
-dSearch.debugger = true;
-dSearch.version = "v9.9.9";
+dSearch.debugger = false;
+dSearch.version = "v1.3.0";
 
 dSearch.initialize = function () {
     dSearch.dictionaryFields = [

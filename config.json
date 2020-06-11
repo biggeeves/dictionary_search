@@ -16,6 +16,9 @@
     },
     {
       "1.2.1": "Inclusion of Event Grid and Tabbed Display"
+    },
+    {
+      "1.3.0": "Get a list of fields with a selected validation"
     }
   ],
   "permissions": [
