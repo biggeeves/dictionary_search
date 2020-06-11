@@ -1,0 +1,46 @@
+"Variable / Field Name","Form Name","Section Header","Field Type","Field Label","Choices, Calculations, OR Slider Labels","Field Note","Text Validation Type OR Show Slider Number","Text Validation Min","Text Validation Max",Identifier?,"Branching Logic (Show field only if...)","Required Field?","Custom Alignment","Question Number (surveys only)","Matrix Group Name","Matrix Ranking?","Field Annotation"
+record_id,default_validations,,text,"Record ID",,,,,,,,,,,,,
+text_no_validations,default_validations,,text,"Text Box with no validation.",,,,,,,,,,,,,
+text_date_validation_dmy,default_validations,Dates,text,"Text Box  Date (D-M-Y) 
+with range 1/1/2019 - 30/12/2019",,,date_dmy,2019-01-01,2019-12-30,,,,,,,,
+text_date_validation_mdy,default_validations,,text,"Text Box  Date (M-D-Y) 
+with range 1/1/2019 - 12/30/2019",,,date_mdy,2019-01-01,2019-12-30,,,,,,,,
+text_date_validation_ymd,default_validations,,text,"Text Box Date (Y-M-D) 
+with range 2019/1/1 - 2019/12/30",,,date_ymd,2019-01-01,2019-12-30,,,,,,,,
+text_datetime_dmyhm,default_validations,"Date Times",text,"Text Box Datetime (D-M-Y H:M)
+
+Min: 01-01-2019 01:01
+Max: 30-12-2019 23:59",,,datetime_dmy,"2019-01-01 01:01","2019-12-30 23:59",,,,,,,,
+text_datetime_mdyhm,default_validations,,text,"Text Box Datetime (D-M-Y H:M)
+
+Min: 01-01-2019 01:01
+Max: 12-30-2019 23:59",,,datetime_mdy,"2019-01-01 01:01","2019-12-30 23:59",,,,,,,,
+text_datetime_ymdyh,default_validations,,text,"Text Box Datetime (Y-D-M H:M)
+
+Min: 2019-01-01 01:01
+Max: 2019-12-30 23:59",,,datetime_ymd,"2019-01-01 01:01","2019-12-30 23:59",,,,,,,,
+text_datetime_dmyhms,default_validations,"Date Time with Seconds",text,"Text Box Datetime (D-M-Y H:M:S)
+
+Min: 05-01-1925 01:01:01
+Max: 31-12-2025 23:59:00",,,datetime_seconds_dmy,"1925-01-05 01:01:00","2025-12-31 23:59:00",,,,,,,,
+text_datetime_mdyhms,default_validations,,text,"Text Box Datetime (M-D-Y H:M:S)
+
+Min: 01-01-2019 01:01:00
+Max: 12-31-2019 23:59:59",,,datetime_seconds_mdy,"2019-01-01 01:01:00","2019-12-31 23:59:00",,,,,,,,
+text_datetime_ymdhms,default_validations,,text,"Text Box Datetime with seconds (Y-D-M H:M:S)
+
+Min: 2019-01-01 01:01:00
+Max: 2019-12-30 23:59:59",,,datetime_seconds_ymd,"2019-01-01 01:01:00","2019-12-30 23:59:00",,,,,,,,
+text_email,default_validations,"Email, Integers, Decimals, Phone, Time, Zip Code",text,email,,,email,,,,,,,,,,
+text_integer,default_validations,,text,"Integer
+
+Min: -10
+Max: 1234567890",,,integer,-10,1234567890,,,,,,,,
+text_number,default_validations,,text,"Integer (Decimals allowed)
+
+Min: -2.9
+Max: 33.045",,,number,-2.9,33.045,,,,,,,,
+text_phone_north_america,default_validations,,text,"Phone (North America)",,,phone,,,,,,,,,,
+text_time,default_validations,,text,"Time (HH:MM)",,,time,00:01,14:56,,,,,,,,
+text_zipcode,default_validations,,text,"Zipcode (U.S.)",,,zipcode,,,,,,,,,,
+notes_box_required,default_validations,,notes,"Notes Box Required",,,,,,,,,,,,,

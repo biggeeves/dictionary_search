@@ -260,6 +260,116 @@
                                 </fieldset>
                             </div>
                             <hr>
+                            <div class="field-validation-options">
+                                <h5 class="font-weight-bolder">Validations</h5>
+                                <fieldset>
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                       name="all_field_validations"
+                                                       id="all_field_validations"
+                                                       onchange="dSearch.toggleFieldValidationsVisibility()" checked>
+                                                <label class="form-check-label"
+                                                       for="all_field_validations">All Validations</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="date_dmy"
+                                                       id="date_dmy"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="date_dmy">date_dmy</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="date_mdy"
+                                                       id="date_mdy"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="date_mdy">date_mdy</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="date_ymd"
+                                                       id="date_ymd"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="date_ymd">date_ymd</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="datetime_dmy"
+                                                       id="datetime_dmy"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="datetime_dmy">datetime_dmy</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="datetime_mdy"
+                                                       id="datetime_mdy"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="datetime_mdy">datetime_mdy</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="datetime_ymd"
+                                                       id="datetime_ymd"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="datetime_ymd">datetime_ymd</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox"
+                                                       name="datetime_seconds_dmy" id="datetime_seconds_dmy"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label"
+                                                       for="datetime_seconds_dmy">datetime_seconds_dmy</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox"
+                                                       name="datetime_seconds_mdy" id="datetime_seconds_mdy"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox"
+                                                       name="datetime_seconds_ymd" id="datetime_seconds_ymd"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label"
+                                                       for="datetime_seconds_ymd">datetime_seconds_ymd</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="email" id="email"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="email">email</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="integer"
+                                                       id="integer"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="integer">integer</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="number"
+                                                       id="number"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="number">number</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="phone" id="phone"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="phone">phone</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="time" id="time"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="time">time</label>
+                                            </div>
+                                            <div class="form-check field-validation">
+                                                <input class="form-check-input" type="checkbox" name="zipcode"
+                                                       id="zipcode"
+                                                       onchange="dSearch.updateAllFieldValidations();">
+                                                <label class="form-check-label" for="zipcode">zipcode</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <hr>
                             <div class="row">
                                 <div class="col">
                                     <h5 class="font-weight-bolder">Text Specificity</h5>
@@ -335,25 +445,25 @@
             <div class="tab-pane fade" id="nav-lists" role="tabpanel" aria-labelledby="nav-lists-tab">
                 <div class="row mt-3">
                     <div class="col-6">
-                        <label class="font-weight-bolder" for="instrument">Select an Instrument</label>
+                        <label class="font-weight-bolder" for="instrument">Instrument</label>
                         <select class="custom-select" name="instrument" id="instrument"
                                 onchange="dSearch.selectInstrument(this.value);">
                             <option value="dSearchAny">Any</option>
                         </select>
                     </div>
-                    <div class="col-6">
-                        <label class="font-weight-bolder" for="fieldNames">Select a Field</label>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-5">
+                        <label class="font-weight-bolder" for="fieldNames">Field</label>
                         <select class="custom-select" name="fieldNames" id="fieldNames"
                                 onchange="dSearch.displayField(this.value);">
                             <option value="dSearchAll">All</option>
                         </select>
                     </div>
-                </div>
-                <div class="row mt-3">
                     <div class="col-3">
-                        <label class="font-weight-bolder" for="selectFieldType">Select a Field Type</label>
+                        <label class="font-weight-bolder" for="selectFieldType">Field Type</label>
                         <select class="custom-select" name="selectFieldType" id="selectFieldType"
-                                onchange="dSearch.displayFieldsByType(this.value);">
+                                onchange="dSearch.displayFieldsByProperty('field_type',this.value);">
                             <option value="dSearchAll">All</option>
                             <option value="text">Text</option>
                             <option value="notes">Notes</option>
@@ -369,14 +479,42 @@
                             <option value="sql">SQL</option>
                         </select>
                     </div>
+                    <div class="col-4">
+                        <label class="font-weight-bolder" for="selectValidation">Validation</label>
+                        <select class="custom-select" name="selectValidation" id="selectValidation"
+                                onchange="dSearch.displayFieldsByProperty('text_validation_type_or_show_slider_number', this.value);">
+                            <option value="dSearchAll">All</option>
+                            <option value="date_dmy">date: dmy</option>
+                            <option value="date_mdy">date: mdy</option>
+                            <option value="date_ymd">date: ymd</option>
+                            <option value="datetime_dmy">datetime: dmy</option>
+                            <option value="datetime_mdy">datetime: mdy</option>
+                            <option value="datetime_ymd">datetime: ymd</option>
+                            <option value="datetime_seconds_dmy">datetime seconds: dmy</option>
+                            <option value="datetime_seconds_mdy">datetime seconds: mdy</option>
+                            <option value="datetime_seconds_ymd">datetime seconds: ymd</option>
+                            <option value="email">email</option>
+                            <option value="integer">integer</option>
+                            <option value="number">number</option>
+                            <option value="phone">phone</option>
+                            <option value="time">time</option>
+                            <option value="zipcode">zipcode</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
                     <div class="col-6">
                         <button class="btn btn-primary btn-sm" name="calcFieldInRadio" id="calcFieldInRadio"
                                 onclick="dSearch.displayRadiosInCalcFields();">Radios in Calc Fields
                         </button>
                     </div>
                 </div>
-                <div id="eventList" style="padding:25px;"></div>
-                <div id="selectResults" style="padding:25px;"></div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div id="eventList" style="padding:25px;"></div>
+                        <div id="selectResults" style="padding:25px;"></div>
+                    </div>
+                </div>
             </div>
             <div class="tab-pane fade" id="nav-events" role="tabpanel" aria-labelledby="nav-events-tab">
                 <div id="selections">
@@ -420,8 +558,6 @@
                 </div>
             </div>
         </div>
-
-
     </div>
 </div>
 

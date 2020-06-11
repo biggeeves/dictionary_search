@@ -11,15 +11,19 @@ dSearch.instrumentNames
 'use strict';
 /*
 * todo:  parse out value labels
-*  todo: Does output need to be escaped? (looking for double quotes).
 *
-* todo: Ability to search text fields by validation type.
+* todo: Does output need to be escaped? (looking for double quotes).
+*
+* todo: Ability to search by annotation?
 *
 * todo: simplify the dictionarySearch by removing blanks properties.
-*  todo: Field Names and Form Names do not have styling applied when they are found because they are proceesed into links to the data dictionary.
+*
+* todo: Field Names and Form Names do not have styling applied when they are found because they are proceesed into links to the data dictionary.
 *   -Is there a way to apply styling after applying the link
 *
 * todo: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  REcreate table.
+*
+* todo: include sample sample schemas
 * */
 
 dSearch.debugger = true;
@@ -47,7 +51,7 @@ dSearch.initialize = function () {
         "custom_alignment"
     ];
 
-    dSearch.redcap_field_types = [
+    dSearch.redcapFieldTypes = [
         "text",
         "notes",
         "calc",
@@ -62,10 +66,28 @@ dSearch.initialize = function () {
         "sql"
     ];
 
+    dSearch.redcapValidations = [
+        "date_dmy",
+        "date_mdy",
+        "date_ymd",
+        "datetime_dmy",
+        "datetime_mdy",
+        "datetime_ymd",
+        "datetime_seconds_dmy",
+        "datetime_seconds_mdy",
+        "datetime_seconds_ymd",
+        "email",
+        "integer",
+        "number",
+        "phone",
+        "time",
+        "zipcode"
+    ];
+
     dSearch.allFormNames = dSearch.getAllFormNames();
     dSearch.allFieldNames = dSearch.getAllFieldNames();
     // todo refactor; use get and set to variable.
-    dSearch.setFieldsByType();
+    dSearch.fieldsByType = dSearch.getFieldsByType();
 
     dSearch.resultsDiv = document.getElementById("results");
     dSearch.selectResultsDiv = document.getElementById("selectResults");
@@ -85,8 +107,6 @@ dSearch.initialize = function () {
     }
     // dSearch.addOptionsToSelect("instrument", dSearch.instrumentNames);
     dSearch.addOptionsToSelect("fieldNames", dSearch.allFieldNames);
-
-    dSearch.dictionaryUC = dSearch.dictionary.map(dSearch.toUpper);
 
     dSearch.handleEnter();
     document.getElementById("searchString").focus();
@@ -118,14 +138,6 @@ dSearch.initialize = function () {
  */
 dSearch.matchCriteria = function (dictionaryRow) {
     let meetsCriteria = false;
-    const dictionaryRowValues = Object.values(dictionaryRow);
-
-    /*
-     remove empty valued Search.selectInstrument(this.value);s from being cycled through later.
-    */
-    const filteredDictionaryRowValues = dictionaryRowValues.filter(function (el) {
-        return el !== "";
-    });
 
     let matchProperties = [];
     dSearch.searchCategories.forEach(function (property) {
@@ -179,7 +191,7 @@ dSearch.matchCriteria = function (dictionaryRow) {
             }
         }
     }
-    /* if the search string is zero than return true is the user searched for required, identifier, or matrix ranking
+    /* if the search string is zero than return true if the user searched for required, identifier, or matrix ranking
     * Example: Search for all required fields does not need search text.
     * */
     if (dSearch.searchText.length === 0) {
@@ -214,11 +226,10 @@ dSearch.submitted = function () {
     dSearch.feedbackDiv.style.display = "block";
     dSearch.feedbackDiv.innerHTML = "Results generated: " + feedBack;
 
-    // dSearch.feedbackDiv.style.display = "none";
-    /*
-    Limit the number for fields TYPES to just the selected fields..
+    /* Limit the number for fields TYPES to just the selected fields..
      */
     dSearch.setSearchFieldTypes();
+    dSearch.setSearchValidations();
 
     if (dSearch.upperCase === 1) {
         dSearch.searchText = dSearch.searchText.toUpperCase();
@@ -286,7 +297,7 @@ dSearch.RenderFieldMeta = function (fieldMeta) {
             categoryLabel = categoryLabel.charAt(0).toUpperCase() + categoryLabel.slice(1);
 
             if (propertyName === "field_name") {
-                propertyValueHTML = dSearch.RenderFieldName(fieldMeta.field_name, fieldMeta.form_name);
+                propertyValueHTML = dSearch.renderFieldName(fieldMeta.field_name, fieldMeta.form_name);
             } else if (propertyName === "form_name") {
                 propertyValueHTML = dSearch.renderFormName(fieldMeta.form_name);
             }
@@ -297,21 +308,29 @@ dSearch.RenderFieldMeta = function (fieldMeta) {
     return metaHTML;
 };
 
-dSearch.RenderFieldName = function (fieldName, InstrumentShortName) {
+dSearch.renderFieldName = function (fieldName, InstrumentShortName) {
     let display = "";
+    let index = dSearch.allFieldNames.indexOf(fieldName);
+    if (index < 0) {
+        return "Field name not found";
+    }
     if (dSearch.canAccessDesigner) {
         display += "<a target=\"blank\" href=\"" +
             dSearch.designerUrl +
-            "&page=" + InstrumentShortName + "&field=" + fieldName + "\">";
+            "&page=" + InstrumentShortName +
+            "&field=" + fieldName +
+            "\"" +
+            "title='Open Designer in New Tab'>";
     }
-    display += "<strong>" + fieldName + "</strong>";
+    display += "<span style='font-weight: bold;' data-field-index='" + index + "'>" +
+        fieldName + "</span>";
     if (dSearch.canAccessDesigner) {
         display += "</a>";
     }
     return display;
 };
 
-
+// todo: check for valid form name. If not valid return null
 dSearch.renderFormName = function (InstrumentShortName) {
     let display = "";
     if (dSearch.canAccessDesigner) {
@@ -336,6 +355,17 @@ dSearch.toggleFieldTypesVisibility = function () {
         $(".field-type").hide("medium");
     } else {
         $(".field-type").show("slow");
+    }
+};
+
+/**
+ * If all field types is checked then hide the field type categories.
+ */
+dSearch.toggleFieldValidationsVisibility = function () {
+    if (document.getElementById("all_field_validations").checked) {
+        $(".field-validation").hide("medium");
+    } else {
+        $(".field-validation").show("slow");
     }
 };
 
@@ -544,15 +574,16 @@ dSearch.displayField = function (fieldName) {
     }
 };
 
-// todo consider making lookup table for field name and row in data dictionary; ie index it.
-
+// dSearch.allFieldNames is a look up table to find the index in dSearch.dictionary
+// receives field name
+// returns field meta data or "Field Not Found".
 dSearch.getFieldDisplayByFieldName = function (fieldName) {
     let result = "";
-    for (let i = 0; i < dSearch.dictionary.length; i++) {
-        if (fieldName === dSearch.dictionary[i].field_name) {
-            result += dSearch.RenderFieldMeta(dSearch.dictionary[i]);
-            break;
-        }
+    let i = dSearch.allFieldNames.indexOf(fieldName);
+    if (i < 0) {
+        result = "Field Not Found";
+    } else {
+        result += dSearch.RenderFieldMeta(dSearch.dictionary[i]);
     }
     return result;
 };
@@ -571,6 +602,8 @@ dSearch.debugDictionarySearch = function () {
     console.log(dSearch.searchCategories);
     console.log("Field types to search:");
     console.log(dSearch.searchFieldTypes);
+    console.log("Validations to search:");
+    console.log(dSearch.searchValidations);
 };
 
 /**
@@ -578,7 +611,7 @@ dSearch.debugDictionarySearch = function () {
  *
  */
 dSearch.setAllFieldTypes = function () {
-    let oneIsChecked = dSearch.redcap_field_types.some(dSearch.isFieldTypeSelected);
+    let oneIsChecked = dSearch.redcapFieldTypes.some(dSearch.isFieldTypeSelected);
     document.getElementById("all_field_types").checked = !oneIsChecked;
 };
 
@@ -636,9 +669,9 @@ dSearch.setSelectedCategories = function () {
 dSearch.setSearchFieldTypes = function () {
     dSearch.searchFieldTypes = [];
     if (document.getElementById("all_field_types").checked) {
-        dSearch.searchFieldTypes = dSearch.redcap_field_types;
+        dSearch.searchFieldTypes = dSearch.redcapFieldTypes;
     } else {
-        dSearch.redcap_field_types.forEach(function (item) {
+        dSearch.redcapFieldTypes.forEach(function (item) {
             let element = document.getElementById(item);
             if (typeof (element) !== "undefined" && element !== null) {
                 if (element.checked === true) {
@@ -647,10 +680,36 @@ dSearch.setSearchFieldTypes = function () {
             }
         });
     }
-
+// FIXME: Not sure if searchCategories is used correctly.
     if (!dSearch.searchCategories.length) {
         document.getElementById("all_field_types").checked = true;
         dSearch.searchFieldTypes = ["all_field_types"];
+    }
+};
+
+/**
+ * Sets array dSearch.setSearchValidations
+ * if nothing is selected default of all_field_types is selected and used as value.
+ */
+
+dSearch.setSearchValidations = function () {
+    dSearch.searchValidations = [];
+    if (document.getElementById("all_field_validations").checked) {
+        dSearch.searchValidations = dSearch.redcapValidations;
+    } else {
+        dSearch.redcapValidations.forEach(function (item) {
+            let element = document.getElementById(item);
+            if (typeof (element) !== "undefined" && element !== null) {
+                if (element.checked === true) {
+                    dSearch.searchValidations.push(item);
+                }
+            }
+        });
+    }
+
+    if (!dSearch.searchValidations.length) {
+        document.getElementById("all_field_validations").checked = true;
+        dSearch.searchFieldTypes = ["all_field_validations"];
     }
 };
 
@@ -875,24 +934,32 @@ dSearch.getFieldNamesByInstrument = function (formName) {
     return fieldNames;
 };
 
+dSearch.displayFieldsByProperty = function (property, value) {
+    let resultHTML = dSearch.getFieldsByPropertyValue(property, value);
+    dSearch.renderSelectedResults(resultHTML);
+
+};
 
 // todo: instead of the value dSearchAll consider zero length string.  That way if nothing is passed to the getFieldsByType it can return all fields.
 // This is beneficial because type=dSearchAll is not intuitive.
-dSearch.displayFieldsByType = function (type) {
+dSearch.getFieldsByPropertyValue = function (property, value) {
     dSearch.renderSelectedResults(""); // clear the results;
-    if (!dSearch.fieldsByType.hasOwnProperty(type) && type !== "dSearchAll") {
-        dSearch.renderSelectedResults("Invalid Field Type");
+    if (!dSearch.dictionaryFields.includes(property) && value !== "dSearchAll") {
+        dSearch.renderSelectedResults("Invalid Validation");
         return;
     }
-    let resultHTML = "";
-    let count = 0;
     let fieldNames = [];
-    if (type === "dSearchAll") {
+    if (value === "dSearchAll") {
         fieldNames = dSearch.allFieldNames;
+    } else {
+        for (let i = 0; i < dSearch.dictionary.length; i++) {
+            if (dSearch.dictionary[i][property] === value) {
+                fieldNames.push(dSearch.dictionary[i].field_name);
+            }
+        }
     }
-    if (dSearch.fieldsByType.hasOwnProperty(type)) {
-        fieldNames = dSearch.getFieldNamesByType(type);
-    }
+
+    let resultHTML = "";
     // reduce field names to just those in the selected instrument.
     let instrumentShortName = document.getElementById("instrument").value;
 
@@ -902,25 +969,30 @@ dSearch.displayFieldsByType = function (type) {
         fieldNames = fieldNames.filter(x => fieldsInForm.includes(x));
     }
 
-    count = fieldNames.length;
+    let count = fieldNames.length;
     resultHTML += "<div><h3 class='text-center'>There ";
-    if (type === "dSearchAll") {
+    if (value === "dSearchAll") {
         resultHTML += "are " + count + " " + " fields of all types.";
     } else {
         if (count === 0) {
-            resultHTML += "are no " + type + " fields.</h3></div>";
+            resultHTML += "are no " + value + " fields.</h3></div>";
         } else {
             if (count === 1) {
-                resultHTML += "is 1 " + type + ".";
+                resultHTML += "is 1 " + value + ".";
             } else {
-                resultHTML += "are " + count + " " + type + " fields.";
+                resultHTML += "are " + count + " " + value + " fields.";
             }
         }
     }
     resultHTML += "</h3></div>";
-    resultHTML += "<div><h3 class='text-center'>Instrument: " +
-        dSearch.renderFormName(instrumentShortName) +
-        "</h3></div>";
+    resultHTML += "<div><h3 class='text-center'>";
+    if (instrumentShortName === "dSearchAny") {
+        resultHTML += "All Instruments";
+    } else {
+        resultHTML += "Instrument: " +
+            dSearch.renderFormName(instrumentShortName) +
+            "</h3></div>";
+    }
     if (count > 0) {
         for (let i = 0; i < fieldNames.length; i++) {
             resultHTML += "<div class=\"col shadow p-3 mb-5 bg-white rounded\">" +
@@ -929,7 +1001,16 @@ dSearch.displayFieldsByType = function (type) {
 
         }
     }
-    dSearch.renderSelectedResults(resultHTML);
+    return resultHTML;
+};
+
+dSearch.propertyValue = function (dictionaryRow, property, value) {
+    return dictionaryRow.filter(function (el) {
+        let match = false;
+        if (el) {
+            console.log(el, property, value);
+        }
+    });
 };
 
 // not used but may be helpful in the future.  6/1/2020
@@ -940,15 +1021,16 @@ dSearch.searchRowByFieldType = function (dictionaryRow, fieldType) {
     return false;
 };
 
-dSearch.setFieldsByType = function () {
-    dSearch.fieldsByType = {};
-    for (const type of dSearch.redcap_field_types) {
-        dSearch.fieldsByType[type] = [];
+dSearch.getFieldsByType = function () {
+    let fieldsByType = {};
+    for (const type of dSearch.redcapFieldTypes) {
+        fieldsByType[type] = [];
     }
 
     for (let field in dSearch.dictionary) {
-        dSearch.fieldsByType[dSearch.dictionary[field].field_type].push(dSearch.dictionary[field].field_name);
+        fieldsByType[dSearch.dictionary[field].field_type].push(dSearch.dictionary[field].field_name);
     }
+    return fieldsByType;
 };
 
 dSearch.displayRadiosInCalcFields = function () {
@@ -958,6 +1040,10 @@ dSearch.displayRadiosInCalcFields = function () {
 
 dSearch.updateAllFieldTypes = function () {
     document.getElementById("all_field_types").checked = false;
+};
+
+dSearch.updateAllFieldValidations = function () {
+    document.getElementById("all_field_validations").checked = false;
 };
 
 dSearch.renderLinkToDesignateForms = function () {
