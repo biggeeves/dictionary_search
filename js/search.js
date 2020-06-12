@@ -274,7 +274,8 @@ dSearch.showResults = function () {
 dSearch.RenderFieldMeta = function (fieldMeta) {
     let metaHTML = "";
     let properties = Object.entries(fieldMeta);
-    let regexSplit = new RegExp(dSearch.searchText, "i");
+    let searchTextHTML = dSearch.escapeHTML(dSearch.searchText);
+    let regexSplit = new RegExp(searchTextHTML, "i");
     for (let i = 0; i < properties.length; i++) {
         let propertyName = properties[i][0];
         let propertyValue = properties[i][1];
@@ -287,12 +288,8 @@ dSearch.RenderFieldMeta = function (fieldMeta) {
         }
         if (propertyValue !== "") {
             let propertyValueHTML = "";
-            if (dSearch.searchCategories.includes(propertyName)) {
-                propertyValueHTML = propertyValue.split(regexSplit).join("<span class='dSearch-bolder'>" + dSearch.searchText + "</span>");
-            } else {
-                propertyValueHTML = propertyValue;
-            }
 
+            // Render category label for display
             let categoryLabel = propertyName.replace(/_/g, " ");
             categoryLabel = categoryLabel.charAt(0).toUpperCase() + categoryLabel.slice(1);
 
@@ -300,6 +297,15 @@ dSearch.RenderFieldMeta = function (fieldMeta) {
                 propertyValueHTML = dSearch.renderFieldName(fieldMeta.field_name, fieldMeta.form_name);
             } else if (propertyName === "form_name") {
                 propertyValueHTML = dSearch.renderFormName(fieldMeta.form_name);
+            } else if (dSearch.searchCategories.includes(propertyName)) {
+                propertyValueHTML = dSearch.escapeHTML(propertyValue);
+                // todo how to change it to escaped HTML and yet still highlight the searched text in someway that does not
+                //   highlight the escaped html?  The code below used to work for giving the search text a format.
+                // original propertyValueHTML = propertyValue.split(regexSplit).join("<span class='dSearch-bolder'>" + dSearch.searchText + "</span>");
+                // this comes close to the original but and specific html character that as encoded will not be highlighted.
+                propertyValueHTML = propertyValueHTML.split(regexSplit).join("<span class='dSearch-bolder'>" + searchTextHTML + "</span>");
+            } else {
+                propertyValueHTML = dSearch.escapeHTML(propertyValue);
             }
             metaHTML = metaHTML + "<p><strong>" + categoryLabel + "</strong>: " + propertyValueHTML + "</p>";
         }
@@ -560,7 +566,7 @@ dSearch.displayFormEvents = function (instrumentName) {
 /* when all you know is the field name to display
    Tricky because "all" is available if an instrument is selected.
  */
-
+// todo displayField should return the resultHTML not set it to the innerHTML
 dSearch.displayField = function (fieldName) {
     document.getElementById("selectFieldType").options[0].selected = true;
     let resultHTML = "<div><h3 class='text-center'><em> " +
@@ -1054,6 +1060,13 @@ dSearch.renderLinkToDesignateForms = function () {
             "\">Designate My Events</a>";
     }
     document.getElementById("designate_forms_url").innerHTML = display;
+};
+
+dSearch.escapeHTML = function escapeHtml(html) {
+    var text = document.createTextNode(html);
+    var p = document.createElement('p');
+    p.appendChild(text);
+    return p.innerHTML;
 };
 
 $(document).ready(function () {
