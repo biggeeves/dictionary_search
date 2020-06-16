@@ -8,9 +8,8 @@ use \REDCap as REDCap;
 use \Security as Security;
 
 /** todo
- * Change custom alignment to appropriate drop downs (if needed)
  * Request for developers: Make an external module for looking up the history of fields.
- * should data dictionary us htmlspecialchars() and display everything as coded or visually as it would be displayed?
+ * When submitting an advanced search remember what the search text was and prefill the search field with it.
  **/
 
 /**
