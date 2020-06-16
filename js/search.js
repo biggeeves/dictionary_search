@@ -111,9 +111,7 @@ dSearch.initialize = function () {
     dSearch.handleEnter();
     document.getElementById("searchString").focus();
 
-    if (!dSearch.isLongitudinal) {
-        document.getElementById("nav-events-tab").style.display = "none";
-    } else {
+    if (dSearch.isLongitudinal) {
         dSearch.eventListDiv = document.getElementById("eventList");
         dSearch.formsForEventDiv = document.getElementById("formsForEvent");
         dSearch.eventTableByEventsDiv = document.getElementById("eventTableByEvent");

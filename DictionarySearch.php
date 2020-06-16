@@ -102,6 +102,7 @@ class DictionarySearch extends AbstractExternalModule
 
         $this->setEventGrid($project_id, array_keys($this->eventNames));
 
+        echo $this->getCSS();
         $this->renderForm();
 
         if (REDCap::isLongitudinal()) {
@@ -167,6 +168,11 @@ class DictionarySearch extends AbstractExternalModule
         return $this->getUrl("js/search.js");
     }
 
+    private function getCSSUrl()
+    {
+        return $this->getUrl("css/base.css");
+    }
+
     /**
      * URL to the instrument in the Online Designer.
      *
@@ -190,16 +196,15 @@ class DictionarySearch extends AbstractExternalModule
     }
 
     /**
-     * echo contents of form.html.
-     * @return string
+     * include form HTML/PHP.
      */
     private function renderForm()
     {
-        $contents = file_get_contents(__DIR__ . '/html/form.html');
-        if ($contents === false) {
+        $htmlPHP = __DIR__ . '/html/form.php';
+        if (!file_exists($htmlPHP)) {
             return 'HTML form not found';
         }
-        echo $contents;
+        include $htmlPHP;
     }
 
     /**
@@ -257,6 +262,12 @@ class DictionarySearch extends AbstractExternalModule
             $isLongitudinal = "true";
         }
         return '<script>dSearch.isLongitudinal = ' . $isLongitudinal . '</script>';
+    }
+
+    private function getCSS()
+    {
+        $cssUrl = '<link  rel="stylesheet" type="text/css" src="' . $this->getCSSUrl() . '"/>';
+        return $cssUrl;
     }
 
     /**

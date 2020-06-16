@@ -1,40 +1,24 @@
-<style>
-    .dSearch-bolder {
-        font-size: 1.1em;
-        text-decoration: underline;
-
-    }
-
-    #scrollToTop {
-        display: none; /* Hidden by default */
-        position: fixed; /* Fixed/sticky position */
-        bottom: 20px; /* Place the button at the bottom of the page */
-        right: 40px; /* Place the button 30px from the right */
-        z-index: 99; /* Make sure it does not overlap */
-        cursor: pointer; /* Add a mouse pointer on hover */
-        padding: 15px; /* Some padding */
-    }
-
-    #scrollToTop:hover {
-        background-color: #555; /* Add a dark-grey background on hover */
-    }
-</style>
 <div class="row">
     <div class="col-9">
         <p data-dSearchVersion="v9.9.9" class="text-muted-more">Dictionary <span id="dSearchVersion"></span></p>
         <nav>
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <a class="nav-item nav-link active" id="nav-search-tab" data-toggle="tab" href="#nav-search" role="tab"
+                <a class="nav-item nav-link" id="nav-search-tab" data-toggle="tab" href="#nav-search" role="tab"
                    aria-controls="nav-search" aria-selected="true">Search</a>
                 <a class="nav-item nav-link" id="nav-lists-tab" data-toggle="tab" href="#nav-lists" role="tab"
                    aria-controls="nav-lists" aria-selected="false">Select</a>
-                <a class="nav-item nav-link" id="nav-events-tab" data-toggle="tab" href="#nav-events" role="tab"
-                   aria-controls="nav-events" aria-selected="false">Events</a>
+                <a class="nav-item nav-link active" id="nav-broad-search-tab" data-toggle="tab" href="#nav-broad-search"
+                   role="tab"
+                   aria-controls="nav-broad-search" aria-selected="false">Broad Search</a>
+                <?php if (REDCap::isLongitudinal()) { ?>
+                    <a class="nav-item nav-link" id="nav-events-tab" data-toggle="tab" href="#nav-events" role="tab"
+                       aria-controls="nav-events" aria-selected="false">Events</a>
+                <?php } ?>
             </div>
         </nav>
 
         <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-search" role="tabpanel" aria-labelledby="nav-search-tab">
+            <div class="tab-pane fade" id="nav-search" role="tabpanel" aria-labelledby="nav-search-tab">
                 <div class="row mt-3">
                     <div class="col">
                         <form name="dataDictionarySearch" class="form">
@@ -515,6 +499,27 @@
                     <div class="col">
                         <div id="eventList" style="padding:25px;"></div>
                         <div id="selectResults" style="padding:25px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade show active" id="nav-broad-search" role="tabpanel"
+                 aria-labelledby="nav-broad-search-tab">
+                <div class="row mt-3">
+                    <div class="col">
+                        <form name="broadSearchForm" class="form" method="post"
+                              action="<?php echo $this->getUrl("index.php"); ?>">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <label for="broadSearchText"
+                                           class="input-group-text col-form-label font-weight-bolder"
+                                    >Search for:</label>
+                                </div>
+                                <input type="text" class="form-control" id="broadSearch" name="broadSearchText">
+                                <div class="input-group-append">
+                                    <input type="submit" class="btn btn-defaultrc" value="Search" name="broadSubmit">
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

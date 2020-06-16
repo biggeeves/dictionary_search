@@ -19,6 +19,9 @@
     },
     {
       "1.3.0": "Get a list of fields with a selected validation"
+    },
+    {
+      "1.4.0": "Search field name includes reports."
     }
   ],
   "permissions": [
