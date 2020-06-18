@@ -61,6 +61,19 @@ class DictionarySearch extends AbstractExternalModule
      */
     private $canAccessDesigner;
 
+    /**
+     * @var string the tab set as active on page load
+     */
+    private $activeTabId;
+    /**
+     * @var mixed REDCap returned user rights.
+     */
+    private $userRights;
+    /**
+     * @var string if the broad search form was submitted; the returned results.  If not submitted zero length string.
+     */
+    private $broadResultsHTML;
+
     public function __construct()
     {
         parent::__construct();
@@ -90,11 +103,12 @@ class DictionarySearch extends AbstractExternalModule
         }
         $this->setDataDictionaryJSON($project_id);
         $this->instrumentNames = REDCap::getInstrumentNames();
-        $userRights = array_shift(REDCap::getUserRights(USERID));
-        /*echo "<pre>";
-        print_r($userRights);
-        echo "x" . $userRights['reports'] ."x";
-        echo "</pre>";*/
+        $rights = REDCap::getUserRights(USERID);
+        $this->userRights = array_shift($rights);
+        /*        echo "<pre>";
+                print_r($this->userRights);
+                echo "x" . $this->userRights['reports'] . "x";
+                echo "</pre>";*/
 
         $this->canAccessDesigner();
 
@@ -105,34 +119,27 @@ class DictionarySearch extends AbstractExternalModule
 
         $this->setEventGrid($project_id, array_keys($this->eventNames));
 
+        /* todo this fails because $searchText has not been defined yet.
+        $searchInto  = "<div class='row'><div class='col'><h4>Search Results <b> " .
+            htmlspecialchars($searchText) . "</b></h4></div></div>";*/
+
+        $this->broadResultsHTML = $this->renderBroadResultsHTML();
+        if ($this->broadResultsHTML == "") {
+            $this->broadResultsHTML = "There are no results for that search.";
+        }
         echo $this->getCSS();
         $this->renderForm();
 
         if (REDCap::isLongitudinal()) {
             $this->setEventTable();
         }
+        $this->activeTabId = "nav-search-tab";
+        if (isset($_POST['broadSubmit'])) {
+            $this->activeTabId = "nav-broad-search-tab";
+        }
 
         echo $this->renderScripts();
 
-        if (isset($_POST['broadSubmit'])) {
-            $searchText = $_POST['broadSearchText'];
-            if ($searchText !== "") {
-
-                echo "<div class='row'><div class='col'><h4>Searching for : <b> " .
-                    htmlspecialchars($searchText) . "</b></h4></div></div>";
-                // update user rights for each section;
-
-                if ($userRights['reports'] === "1") {
-                    echo $this->getSearchReportsResult($searchText);
-                    echo $this->getSearchReportFieldsResults($searchText);
-                    echo $this->getSearchDQRules($searchText);
-                    echo $this->getSearchAlertsResults($searchText);
-                    echo $this->getSearchDashboardResults($searchText);
-                    echo $this->getSearchSurveySettingsResults($searchText);
-                    echo $this->getSearchASIResults($searchText);
-                }
-            }
-        }
     }
 
     private function canAccessDesigner()
@@ -299,6 +306,8 @@ class DictionarySearch extends AbstractExternalModule
         $jsUrl = '<script src="' . $this->getJSUrl() . '"></script>';
         $designerUrl = '<script>dSearch.designerUrl="' . $this->getOnlineDesignerURL() . '";</script>';
         $designateFormsUrl = '<script>dSearch.designateFormsUrl="' . $this->getDesignateFormsURL() . '";</script>';
+
+
         $canAccessDesignerJS = '<script>dSearch.canAccessDesigner=';
         if ($this->canAccessDesigner) {
             $canAccessDesignerJS .= 'true';
@@ -307,6 +316,9 @@ class DictionarySearch extends AbstractExternalModule
         }
         $canAccessDesignerJS .= '</script>';
 
+        $activeTabJS = $this->activeTabOnLoadJS($this->activeTabId);
+
+
         $scripts = $this->dSearchJsObject() . PHP_EOL .
             $this->getInstrumentsNamesJS() . PHP_EOL .
             $dictionary . PHP_EOL .
@@ -314,7 +326,9 @@ class DictionarySearch extends AbstractExternalModule
             $designerUrl . PHP_EOL .
             $designateFormsUrl . PHP_EOL .
             $canAccessDesignerJS . PHP_EOL .
-            $this->getIsLongitudinalJS() . PHP_EOL;
+            $this->getIsLongitudinalJS() . PHP_EOL .
+            $activeTabJS . PHP_EOL .
+            $this->renderBroadSearchResultsJSON() . PHP_EOL;
         if (REDCap::isLongitudinal()) {
             $scripts .= $this->getEventGridJS($this->eventGrid) . PHP_EOL .
                 $this->getEventNamesJS() . PHP_EOL .
@@ -531,7 +545,6 @@ class DictionarySearch extends AbstractExternalModule
         $parameters = [$project_id, $fuzzyText];
         $result = $this->query($sql, $parameters);
         $html .= $this->renderQueryResults($result);
-
         return $html;
     }
 
@@ -693,17 +706,21 @@ class DictionarySearch extends AbstractExternalModule
     {
         $html = "";
         if ($result->num_rows === 0) {
-            $html .= "<h4>Nothing was found.</h4>";
+            $html .= "<p>Nothing was found.</p>";
         } else {
             if ($result->num_rows === 1) {
-                $html .= "<h4>One result.</h4>";
+                $html .= "<p>One result.</p>";
             } else {
-                $html .= "<h4>" . $result->num_rows . " results.</h4>";
+                $html .= "<p>" . $result->num_rows . " results.</p>";
             }
             while ($row = $result->fetch_assoc()) {
                 foreach ($row as $key => $value) {
                     if (!is_null($value)) {
-                        $html .= "<strong>" . $key . "</strong>: " . htmlspecialchars($value) . "<br>";
+                        $html .= "<strong>" .
+                            ucfirst(str_replace("_", " ", $key)) .
+                            "</strong>: " .
+                            htmlspecialchars($value) .
+                            "<br>";
                     }
                 }
                 $html .= "<hr>";
@@ -711,5 +728,45 @@ class DictionarySearch extends AbstractExternalModule
         }
         $html .= "</div></div>";
         return $html;
+    }
+
+    /**
+     * @param null $activeTabId Tab Id to open on page load.
+     * @return string
+     */
+    private function activeTabOnLoadJS($activeTabId = "nav-search-tab")
+    {
+        $js = '<script>dSearch.activeTabId = "' . $activeTabId . '";</script>';
+        return $js;
+    }
+
+    private function renderBroadResultsHTML()
+    {
+        $html = "";
+        if (isset($_POST['broadSubmit'])) {
+            $searchText = $_POST['broadSearchText'];
+            if ($searchText !== "") {
+
+                if ($this->userRights['reports'] === "1") {
+                    $html .= $this->getSearchReportsResult($searchText);
+                    $html .= $this->getSearchReportFieldsResults($searchText);
+                }
+                if ($this->userRights["data_quality_design"]) {
+                    $html .= $this->getSearchDQRules($searchText);
+                }
+                if ($this->userRights["participants"]) {
+                    $html .= $this->getSearchAlertsResults($searchText);
+                    $html .= $this->getSearchDashboardResults($searchText);
+                    $html .= $this->getSearchSurveySettingsResults($searchText);
+                    $html .= $this->getSearchASIResults($searchText);
+                }
+            }
+        }
+        return $html;
+    }
+
+    private function renderBroadSearchResultsJSON()
+    {
+        return "<script>broadResultsJSON = " . json_encode($this->broadResultsHTML) . "</script>";
     }
 }

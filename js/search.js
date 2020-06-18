@@ -126,6 +126,8 @@ dSearch.initialize = function () {
     if (dSearch.debugger) {
         document.getElementById("dSearchVersion").innerText = dSearch.version;
     }
+
+    dSearch.selectTab(dSearch.activeTabId);
 };
 
 
@@ -1065,6 +1067,10 @@ dSearch.escapeHTML = function escapeHtml(html) {
     var p = document.createElement('p');
     p.appendChild(text);
     return p.innerHTML;
+};
+
+dSearch.selectTab = function (tabId) {
+    $('#' + tabId).tab('show');
 };
 
 $(document).ready(function () {

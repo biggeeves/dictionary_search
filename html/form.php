@@ -3,11 +3,11 @@
         <p data-dSearchVersion="v9.9.9" class="text-muted-more">Dictionary <span id="dSearchVersion"></span></p>
         <nav>
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <a class="nav-item nav-link" id="nav-search-tab" data-toggle="tab" href="#nav-search" role="tab"
+                <a class="nav-item nav-link active" id="nav-search-tab" data-toggle="tab" href="#nav-search" role="tab"
                    aria-controls="nav-search" aria-selected="true">Search</a>
                 <a class="nav-item nav-link" id="nav-lists-tab" data-toggle="tab" href="#nav-lists" role="tab"
                    aria-controls="nav-lists" aria-selected="false">Select</a>
-                <a class="nav-item nav-link active" id="nav-broad-search-tab" data-toggle="tab" href="#nav-broad-search"
+                <a class="nav-item nav-link" id="nav-broad-search-tab" data-toggle="tab" href="#nav-broad-search"
                    role="tab"
                    aria-controls="nav-broad-search" aria-selected="false">Broad Search</a>
                 <?php if (REDCap::isLongitudinal()) { ?>
@@ -18,7 +18,7 @@
         </nav>
 
         <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade" id="nav-search" role="tabpanel" aria-labelledby="nav-search-tab">
+            <div class="tab-pane fade show active" id="nav-search" role="tabpanel" aria-labelledby="nav-search-tab">
                 <div class="row mt-3">
                     <div class="col">
                         <form name="dataDictionarySearch" class="form">
@@ -35,7 +35,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <h5 class="font-weight-bolder">Categories</h5>
+                            <h5 class="font-weight-bolder">Field Properties</h5>
                             <fieldset>
                                 <div class="row">
                                     <div class="col">
@@ -396,7 +396,7 @@
                                     </fieldset>
                                 </div>
                                 <div class="col">
-                                    <h5 class="font-weight-bolder">Display Results</h5>
+                                    <h5 class="font-weight-bolder">Search Results</h5>
                                     <fieldset>
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="all_var_info"
@@ -502,7 +502,7 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade show active" id="nav-broad-search" role="tabpanel"
+            <div class="tab-pane fade" id="nav-broad-search" role="tabpanel"
                  aria-labelledby="nav-broad-search-tab">
                 <div class="row mt-3">
                     <div class="col">
@@ -522,6 +522,7 @@
                         </form>
                     </div>
                 </div>
+                <div id="broadResults" style="padding:25px;"><?php echo $this->broadResultsHTML ?></div>
             </div>
             <div class="tab-pane fade" id="nav-events" role="tabpanel" aria-labelledby="nav-events-tab">
                 <div id="selections">
