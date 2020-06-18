@@ -90,7 +90,11 @@ class DictionarySearch extends AbstractExternalModule
         }
         $this->setDataDictionaryJSON($project_id);
         $this->instrumentNames = REDCap::getInstrumentNames();
-        $userRights = REDCap::getUserRights(USERID);
+        $userRights = array_shift(REDCap::getUserRights(USERID));
+        /*echo "<pre>";
+        print_r($userRights);
+        echo "x" . $userRights['reports'] ."x";
+        echo "</pre>";*/
 
         $this->canAccessDesigner();
 
@@ -106,26 +110,42 @@ class DictionarySearch extends AbstractExternalModule
 
         if (REDCap::isLongitudinal()) {
             $this->setEventTable();
-            // echo 'this area is to be rendered by javascript';
-            // echo $this->getEventTable();
         }
 
         echo $this->renderScripts();
 
+        if (isset($_POST['broadSubmit'])) {
+            $searchText = $_POST['broadSearchText'];
+            if ($searchText !== "") {
+
+                echo "<div class='row'><div class='col'><h4>Searching for : <b> " .
+                    htmlspecialchars($searchText) . "</b></h4></div></div>";
+                // update user rights for each section;
+
+                if ($userRights['reports'] === "1") {
+                    echo $this->getSearchReportsResult($searchText);
+                    echo $this->getSearchReportFieldsResults($searchText);
+                    echo $this->getSearchDQRules($searchText);
+                    echo $this->getSearchAlertsResults($searchText);
+                    echo $this->getSearchDashboardResults($searchText);
+                    echo $this->getSearchSurveySettingsResults($searchText);
+                    echo $this->getSearchASIResults($searchText);
+                }
+            }
+        }
     }
 
     private function canAccessDesigner()
     {
         global $draft_mode;  // 1=Draft Mode
         global $status;  // 0=Design Mode, 1=Production
-        $userRights = REDCap::getUserRights(USERID);
-        $user = array_shift($userRights);
+        $userRights = array_shift(REDCap::getUserRights(USERID));
 
         // No rights until proven.
         $this->canAccessDesigner = false;
 
         if ($status == 0 || $draft_mode == 1) {
-            if ($user['design'] == 1) {
+            if ($userRights['design'] == 1) {
                 $this->canAccessDesigner = true;
             }
         }
@@ -457,5 +477,239 @@ class DictionarySearch extends AbstractExternalModule
         $eventGridJSON = json_encode($eventGrid);
         $eventGrid = '<script>dSearch.eventGrid=' . $eventGridJSON . ';</script>';
         return $eventGrid;
+    }
+
+    private function getSearchReportsResult($searchText)
+    {
+        global $project_id;
+        $fuzzyText = "%" . $searchText . "%";
+        $html = "<div class='row'><div class='col'><h4 class='text-center'>Reports</h4>";
+        $sql = 'SELECT ' .
+            'report_id, ' .
+            'title, ' .
+            'description, ' .
+            'orderby_field1, ' .
+            'orderby_field2, ' .
+            'orderby_field3, ' .
+            'advanced_logic, ' .
+            'dynamic_filter1, ' .
+            'dynamic_filter2, ' .
+            'dynamic_filter3  ' .
+            'FROM ' .
+            'redcap_reports ' .
+            'WHERE ' .
+            'project_id = ? ' .
+            'AND ( title LIKE ? ' .
+            'OR description LIKE ? ' .
+            'OR orderby_field1 LIKE ? ' .
+            'OR orderby_field2 LIKE ? ' .
+            'OR orderby_field3 LIKE ? ' .
+            'OR advanced_logic LIKE ? ' .
+            'OR dynamic_filter1 LIKE ? ' .
+            'OR dynamic_filter2 LIKE ? ' .
+            'OR dynamic_filter3 LIKE ? )' .
+            ';';
+        $parameters = [$project_id, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText];
+        $result = $this->query($sql, $parameters);
+        $html .= $this->renderQueryResults($result);
+        return $html;
+    }
+
+    private function getSearchReportFieldsResults($searchText)
+    {
+        global $project_id;
+        $fuzzyText = "%" . $searchText . "%";
+        $html = "<div class='row'><div class='col'><h4 class='text-center'>Fields in Reports</h4>";
+        $sql = 'SELECT ' .
+            'redcap_reports.report_id, redcap_reports.title, redcap_reports_fields.field_name ' .
+            'FROM ' .
+            'redcap_reports ' .
+            'INNER JOIN ' .
+            'redcap_reports_fields ON redcap_reports.report_id = redcap_reports_fields.report_id ' .
+            'WHERE ' .
+            'project_id = ? AND field_name LIKE ?;';
+        $parameters = [$project_id, $fuzzyText];
+        $result = $this->query($sql, $parameters);
+        $html .= $this->renderQueryResults($result);
+
+        return $html;
+    }
+
+    private function getSearchDQRules($searchText)
+    {
+        global $project_id;
+        $fuzzyText = "%" . $searchText . "%";
+        $html = "<div class='row'><div class='col'><h4 class='text-center'>Data Quality Rules</h4>";
+
+        $sql = 'SELECT ' .
+            'rule_id, rule_name, rule_logic ' .
+            'FROM ' .
+            'redcap_data_quality_rules ' .
+            'WHERE ' .
+            'project_id = ? AND rule_logic like ?;';
+        $parameters = [$project_id, $fuzzyText];
+        $result = $this->query($sql, $parameters);
+        $html .= $this->renderQueryResults($result);
+        return $html;
+
+    }
+
+    private function getSearchAlertsResults($searchText)
+    {
+        global $project_id;
+        $fuzzyText = "%" . $searchText . "%";
+        $html = "<div class='row'><div class='col'><h4 class='text-center'>Alerts</h4>";
+
+        $sql = 'SELECT ' .
+            'alert_id, alert_title, alert_condition, email_subject, alert_message ' .
+            'FROM ' .
+            'redcap_alerts ' .
+            'WHERE ' .
+            'project_id = ? AND ' .
+            '( alert_condition LIKE ? ' .
+            'OR ' .
+            'alert_title LIKE ? ' .
+            'OR ' .
+            'form_name LIKE ? ' .
+            'OR ' .
+            'email_subject  LIKE ? ' .
+            'OR ' .
+            'alert_message  LIKE ?);';
+        $parameters = [$project_id, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText];
+
+        $result = $this->query($sql, $parameters);
+        $html .= $this->renderQueryResults($result);
+        return $html;
+
+    }
+
+    private function getSearchDashboardResults($searchText)
+    {
+        global $project_id;
+        $fuzzyText = "%" . $searchText . "%";
+        $html = "<div class='row'><div class='col'><h4 class='text-center'>Dashboards</h4>";
+
+        $sql = 'SELECT ' .
+            'rd_id, title, description, filter_logic, sort_field_name ' .
+            'FROM ' .
+            'redcap_record_dashboards ' .
+            'WHERE ' .
+            'project_id = ? AND ' .
+            '( title LIKE ? ' .
+            'OR ' .
+            'description LIKE ? ' .
+            'OR ' .
+            'filter_logic LIKE ? ' .
+            'OR ' .
+            'sort_field_name LIKE ?);';
+        $parameters = [$project_id, $fuzzyText, $fuzzyText, $fuzzyText, $fuzzyText];
+
+        $result = $this->query($sql, $parameters);
+        $html .= $this->renderQueryResults($result);
+        return $html;
+
+    }
+
+    private function getSearchSurveySettingsResults($searchText)
+    {
+        global $project_id;
+        $fuzzyText = "%" . $searchText . "%";
+        $html = "<div class='row'><div class='col'><h4 class='text-center'>Survey Settings</h4>";
+
+        $sql = 'SELECT ' .
+            '`survey_id`, ' .
+            '`form_name`, ' .
+            '`title`,  ' .
+            '`instructions`, ' .
+            '`acknowledgement`,  ' .
+            '`confirmation_email_subject`, ' .
+            '`confirmation_email_content` ' .
+            'FROM ' .
+            'redcap_surveys ' .
+            'WHERE ' .
+            'project_id = ? AND ' .
+            '( form_name LIKE ? ' .
+            'OR ' .
+            'title  LIKE ? ' .
+            'OR ' .
+            'instructions  LIKE ? ' .
+            'OR ' .
+            'acknowledgement  LIKE ? ' .
+            'OR ' .
+            'confirmation_email_subject  LIKE ? ' .
+            'OR ' .
+            'confirmation_email_content  LIKE ?);';
+        $parameters = [$project_id,
+            $fuzzyText,
+            $fuzzyText,
+            $fuzzyText,
+            $fuzzyText,
+            $fuzzyText,
+            $fuzzyText];
+
+
+        $result = $this->query($sql, $parameters);
+        $html .= $this->renderQueryResults($result);
+        return $html;
+
+    }
+
+    private function getSearchASIResults($searchText)
+    {
+        global $project_id;
+        $fuzzyText = "%" . $searchText . "%";
+        $html = "<div class='row'><div class='col'><h4 class='text-center'>ASI</h4>";
+
+        $sql = 'SELECT ' .
+            'redcap_surveys_scheduler.survey_id, ' .
+            'redcap_surveys_scheduler.email_subject, ' .
+            'redcap_surveys_scheduler.email_content,  ' .
+            'redcap_surveys_scheduler.condition_logic, ' .
+            'redcap_surveys.title ' .
+            'FROM ' .
+            'redcap_surveys_scheduler ' .
+            'INNER JOIN ' .
+            'redcap_surveys ON redcap_surveys.survey_id = redcap_surveys_scheduler.survey_id ' .
+            'WHERE ' .
+            'project_id = ? AND ' .
+            '(email_subject LIKE ? ' .
+            'OR ' .
+            'email_content  LIKE ? ' .
+            'OR ' .
+            'condition_logic  LIKE ? ' .
+            ');';
+        $parameters = [$project_id,
+            $fuzzyText,
+            $fuzzyText,
+            $fuzzyText];
+
+        $result = $this->query($sql, $parameters);
+        $html .= $this->renderQueryResults($result);
+        return $html;
+
+    }
+
+    private function renderQueryResults($result)
+    {
+        $html = "";
+        if ($result->num_rows === 0) {
+            $html .= "<h4>Nothing was found.</h4>";
+        } else {
+            if ($result->num_rows === 1) {
+                $html .= "<h4>One result.</h4>";
+            } else {
+                $html .= "<h4>" . $result->num_rows . " results.</h4>";
+            }
+            while ($row = $result->fetch_assoc()) {
+                foreach ($row as $key => $value) {
+                    if (!is_null($value)) {
+                        $html .= "<strong>" . $key . "</strong>: " . htmlspecialchars($value) . "<br>";
+                    }
+                }
+                $html .= "<hr>";
+            }
+        }
+        $html .= "</div></div>";
+        return $html;
     }
 }
