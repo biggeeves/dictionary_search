@@ -432,7 +432,7 @@
                         <label class="font-weight-bolder" for="instrument">Instrument</label>
                         <select class="custom-select" name="instrument" id="instrument"
                                 onchange="dSearch.selectionController('form_name',this.value);">
-                            <option value="dSearchAll">All</option>
+                            <option value="">All</option>
                         </select>
                     </div>
                 </div>
@@ -441,14 +441,14 @@
                         <label class="font-weight-bolder" for="fieldNames">Field</label>
                         <select class="custom-select" name="fieldNames" id="fieldNames"
                                 onchange="dSearch.selectionController('field_name',this.value);">
-                            <option value="dSearchAll">All</option>
+                            <option value="">All</option>
                         </select>
                     </div>
                     <div class="col-3">
                         <label class="font-weight-bolder" for="selectFieldType">Field Type</label>
                         <select class="custom-select" name="selectFieldType" id="selectFieldType"
                                 onchange="dSearch.selectionController('field_type',this.value);">
-                            <option value="dSearchAll">All</option>
+                            <option value="">All</option>
                             <option value="text">Text</option>
                             <option value="notes">Notes</option>
                             <option value="calc">Calc</option>
@@ -467,7 +467,7 @@
                         <label class="font-weight-bolder" for="selectValidation">Validation</label>
                         <select class="custom-select" name="selectValidation" id="selectValidation"
                                 onchange="dSearch.selectionController('text_validation_type_or_show_slider_number', this.value);">
-                            <option value="dSearchAll">All</option>
+                            <option value="">All</option>
                             <option value="date_dmy">date: dmy</option>
                             <option value="date_mdy">date: mdy</option>
                             <option value="date_ymd">date: ymd</option>
@@ -530,13 +530,13 @@
                         <div class="col-4">
                             <label class="font-weight-bolder" for="instrumentEvent">Select an Instrument</label>
                             <select class="custom-select" name="instrumentEvent" id="instrumentEvent"
-                                    onchange="dSearch.renderEventsForForm(this.value);">
+                                    onchange="dSearch.renderEventsForInstrument(this.value);">
                             </select>
                         </div>
                         <div class="col-4">
                             <label class="font-weight-bolder" for="eventSelect">Select an Event</label>
                             <select class="custom-select" name="eventSelect" id="eventSelect"
-                                    onchange="dSearch.renderFormsForEvent(this.value);">
+                                    onchange="dSearch.renderInstrumentsForEvent(this.value);">
                             </select>
                         </div>
                         <div class="col-3">
