@@ -431,8 +431,8 @@
                     <div class="col-6">
                         <label class="font-weight-bolder" for="instrument">Instrument</label>
                         <select class="custom-select" name="instrument" id="instrument"
-                                onchange="dSearch.selectInstrument(this.value);">
-                            <option value="dSearchAny">Any</option>
+                                onchange="dSearch.selectionController('form_name',this.value);">
+                            <option value="dSearchAll">All</option>
                         </select>
                     </div>
                 </div>
@@ -440,14 +440,14 @@
                     <div class="col-5">
                         <label class="font-weight-bolder" for="fieldNames">Field</label>
                         <select class="custom-select" name="fieldNames" id="fieldNames"
-                                onchange="dSearch.displayField(this.value);">
+                                onchange="dSearch.selectionController('field_name',this.value);">
                             <option value="dSearchAll">All</option>
                         </select>
                     </div>
                     <div class="col-3">
                         <label class="font-weight-bolder" for="selectFieldType">Field Type</label>
                         <select class="custom-select" name="selectFieldType" id="selectFieldType"
-                                onchange="dSearch.displayFieldsByProperty('field_type',this.value);">
+                                onchange="dSearch.selectionController('field_type',this.value);">
                             <option value="dSearchAll">All</option>
                             <option value="text">Text</option>
                             <option value="notes">Notes</option>
@@ -466,7 +466,7 @@
                     <div class="col-4">
                         <label class="font-weight-bolder" for="selectValidation">Validation</label>
                         <select class="custom-select" name="selectValidation" id="selectValidation"
-                                onchange="dSearch.displayFieldsByProperty('text_validation_type_or_show_slider_number', this.value);">
+                                onchange="dSearch.selectionController('text_validation_type_or_show_slider_number', this.value);">
                             <option value="dSearchAll">All</option>
                             <option value="date_dmy">date: dmy</option>
                             <option value="date_mdy">date: mdy</option>

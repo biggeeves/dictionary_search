@@ -83,6 +83,7 @@ dSearch.initialize = function () {
         "time",
         "zipcode"
     ];
+    dSearch.variableWrapper = "<div class=\"col shadow p-3 mb-5 bg-white rounded\">";
 
     dSearch.allFormNames = dSearch.getAllFormNames();
     dSearch.allFieldNames = dSearch.getAllFieldNames();
@@ -472,7 +473,7 @@ dSearch.addFieldNamesToSelectByFormName = function (instrumentName) {
     let fieldNamesSelect = document.getElementById("fieldNames");
     fieldNamesSelect.add(optionAll);
     dSearch.dictionary.forEach(function (field) {
-        if (field.form_name === instrumentName || instrumentName === "dSearchAny") {
+        if (field.form_name === instrumentName || instrumentName === "dSearchAll") {
             let option = document.createElement("option");
             option.text = field.field_name;
             option.value = field.field_name;
@@ -490,16 +491,18 @@ dSearch.removeDuplicates = function (data) {
     return [...new Set(data)];
 };
 
+
+// todo dSearch.displayFieldsByProperty('form_name',this.value); this could be used instead.
+// - 1st problem: showing the event grid.
 dSearch.selectInstrument = function (instrumentName) {
-    document.getElementById("selectFieldType").options[0].selected = true;
     dSearch.feedbackDiv.style.display = "none";
     if (dSearch.isLongitudinal) {
         dSearch.eventListDiv.innerHTML = "";
-        if (instrumentName !== "dSearchAny") {
+        if (instrumentName !== "dSearchAll") {
             dSearch.eventListDiv.innerHTML = dSearch.displayFormEvents(instrumentName);
         }
     }
-    if (instrumentName !== "dSearchAny") {
+    if (instrumentName !== "dSearchAll") {
         dSearch.displayInstrument(instrumentName);
     }
     dSearch.addFieldNamesToSelectByFormName(instrumentName);
@@ -520,17 +523,17 @@ dSearch.getAllFieldsMetaForInstrument = function (instrumentName) {
 };
 
 dSearch.displayInstrument = function (instrumentName) {
-    dSearch.selectResultsDiv.innerHTML = "";
-    if (!dSearch.instrumentNames.has(instrumentName)) {
-        return;
-    }
-    let resultHTML = "<div><h3 class='text-center'><em> " +
-        dSearch.instrumentNames.get(instrumentName) +
-        "</em></h3></div>";
+    /*    dSearch.selectResultsDiv.innerHTML = "";
+        if (!dSearch.instrumentNames.has(instrumentName)) {
+            return;
+        }
+        let resultHTML = "<div><h3 class='text-center'><em> " +
+            dSearch.instrumentNames.get(instrumentName) +
+            "</em></h3></div>";
 
-    resultHTML += dSearch.getAllFieldsMetaForInstrument(instrumentName);
+        resultHTML += dSearch.getAllFieldsMetaForInstrument(instrumentName);
 
-    dSearch.selectResultsDiv.innerHTML = resultHTML;
+        dSearch.selectResultsDiv.innerHTML = resultHTML;*/
 };
 
 dSearch.displayFormEvents = function (instrumentName) {
@@ -933,27 +936,148 @@ dSearch.getFieldNamesByType = function (type) {
 dSearch.getFieldNamesByInstrument = function (formName) {
     let fieldNames = [];
     dSearch.dictionary.forEach(function (field) {
-        if (field.form_name === formName || formName === "dSearchAny") {
+        if (field.form_name === formName || formName === "dSearchAll") {
             fieldNames.push(field.field_name);
         }
     });
     return fieldNames;
 };
 
-dSearch.displayFieldsByProperty = function (property, value) {
-    let resultHTML = dSearch.getFieldsByPropertyValue(property, value);
+// TODO START WORK HERE TOMORROW.  DUPLICATING AND SIMPLIFYING FUNCTION AND FUNCTION CALLS BELOW.
+// todo GETTING AN undefined in the event list when playing around with the selections and chosing validations
+dSearch.selectionController = function (property, value) {
+    // todo check if valid properties and values are passed.
+    /*
+        if (!dSearch.dictionaryFields.includes(property) && value !== "dSearchAll") {
+            dSearch.renderSelectedResults("Invalid Validation");
+            return;
+        }
+    */
+
+    let resultHTML = "";
+    dSearch.feedbackDiv.style.display = "none";
+    dSearch.renderSelectedResults(""); // clear the results;
+
+    if (property === "text_validation_type_or_show_slider_number") {
+        document.getElementById("selectFieldType").value = "text";
+        document.getElementById("fieldNames").value = "dSearchAll";
+    } else if (property === "field_type") {
+        document.getElementById("fieldNames").value = "dSearchAll";
+        document.getElementById("selectValidation").value = "dSearchAll";
+    } else if (property === "field_name") {
+        document.getElementById("selectFieldType").value = "dSearchAll";
+        document.getElementById("selectValidation").value = "dSearchAll";
+    } else if (property === "form_name") {
+        dSearch.selectInstrument(value);
+
+        // display event data
+        if (dSearch.isLongitudinal) {
+            dSearch.eventListDiv.innerHTML = "";
+            if (value !== "dSearchAll") {
+                dSearch.eventListDiv.innerHTML = dSearch.displayFormEvents(value);
+            }
+        }
+        dSearch.addFieldNamesToSelectByFormName(value);
+    }
+    let selection = dSearch.setSelection();
+
+    let fieldNames = dSearch.getFieldsBySelection(selection);
+
+    resultHTML += dSearch.summary(fieldNames);
+    for (let i = 0; i < fieldNames.length; i++) {
+        resultHTML += dSearch.variableWrapper +
+            dSearch.getFieldDisplayByFieldName(fieldNames[i]) +
+            "</div>";
+    }
     dSearch.renderSelectedResults(resultHTML);
 
 };
 
+dSearch.summary = function (resultArray) {
+    let count = resultArray.length;
+    let summaryHTML = "<div><h3 class='text-center'>There ";
+    if (count === 0) {
+        summaryHTML += "are no results.</h3></div>";
+    } else {
+        if (count === 1) {
+            summaryHTML += "is 1 result.";
+        } else {
+            summaryHTML += "are " + count + " results.";
+        }
+    }
+    summaryHTML += "</h3></div>";
+    return summaryHTML;
+};
+
+dSearch.setSelection = function () {
+    let select = new Map();
+    select.set('form_name', document.getElementById("instrument").value);
+    select.set('field_name', document.getElementById("fieldNames").value);
+    select.set('field_type', document.getElementById("selectFieldType").value);
+    select.set('text_validation_type_or_show_slider_number', document.getElementById("selectValidation").value);
+    return select;
+};
+
+// must pass each selection criteria.  All or nothing.
+dSearch.getFieldsBySelection = function (selections) {
+    let fieldNames = [];
+    for (let i = 0; i < dSearch.dictionary.length; i++) {
+        let pass = 0;
+        for (let [property, value] of selections) {
+            if (value === 'dSearchAll') {
+                pass++;
+            } else if (dSearch.dictionary[i][property] === value) {
+                pass++;
+            }
+        }
+        if (pass === selections.size) {
+            fieldNames.push(dSearch.dictionary[i].field_name);
+        }
+    }
+    return fieldNames;
+};
+
+
+dSearch.displayFieldsByProperty = function (property, value) {
+    dSearch.feedbackDiv.style.display = "none";
+    if (property === "text_validation_type_or_show_slider_number") {
+        document.getElementById("selectFieldType").value = "text";
+        document.getElementById("fieldNames").value = "dSearchAll";
+    } else if (property === "field_type") {
+        document.getElementById("fieldNames").value = "dSearchAll";
+        document.getElementById("selectValidation").value = "dSearchAll";
+    } else if (property === "field_name") {
+        document.getElementById("selectFieldType").value = "dSearchAll";
+        document.getElementById("selectValidation").value = "dSearchAll";
+    } else if (property === "form_name") {
+        // todo bug: when a new instrument is chose and there is a validation chosen the results do not filter by validation
+        dSearch.selectInstrument(value);
+
+        if (dSearch.isLongitudinal) {
+            dSearch.eventListDiv.innerHTML = "";
+            if (value !== "dSearchAll") {
+                dSearch.eventListDiv.innerHTML = dSearch.displayFormEvents(value);
+            }
+        }
+        dSearch.addFieldNamesToSelectByFormName(value);
+    }
+    let resultHTML = dSearch.getFieldsByPropertyValue(property, value);
+    dSearch.renderSelectedResults(resultHTML);
+};
+
 // todo: instead of the value dSearchAll consider zero length string.  That way if nothing is passed to the getFieldsByType it can return all fields.
 // This is beneficial because type=dSearchAll is not intuitive.
+// todo: This function was great when only one criteria is possible to select.  When multiple criterias are selected it fails.
+//  - It is better to get the values of all criteria and then drill down.
+//  It is a good function, just simplify, perhaps return a list of fields that match the criteria instead.
 dSearch.getFieldsByPropertyValue = function (property, value) {
     dSearch.renderSelectedResults(""); // clear the results;
     if (!dSearch.dictionaryFields.includes(property) && value !== "dSearchAll") {
         dSearch.renderSelectedResults("Invalid Validation");
         return;
     }
+
+    // create list of field names that match the criteria.
     let fieldNames = [];
     if (value === "dSearchAll") {
         fieldNames = dSearch.allFieldNames;
@@ -969,7 +1093,7 @@ dSearch.getFieldsByPropertyValue = function (property, value) {
     // reduce field names to just those in the selected instrument.
     let instrumentShortName = document.getElementById("instrument").value;
 
-    if (instrumentShortName !== "dSearchAny") {
+    if (instrumentShortName !== "dSearchAll") {
 // if an instrument is chosen then look for the values in both arrays.
         let fieldsInForm = dSearch.getFieldNamesByInstrument(instrumentShortName);
         fieldNames = fieldNames.filter(x => fieldsInForm.includes(x));
@@ -992,7 +1116,7 @@ dSearch.getFieldsByPropertyValue = function (property, value) {
     }
     resultHTML += "</h3></div>";
     resultHTML += "<div><h3 class='text-center'>";
-    if (instrumentShortName === "dSearchAny") {
+    if (instrumentShortName === "dSearchAll") {
         resultHTML += "All Instruments";
     } else {
         resultHTML += "Instrument: " +

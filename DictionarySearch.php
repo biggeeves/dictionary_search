@@ -124,6 +124,9 @@ class DictionarySearch extends AbstractExternalModule
             htmlspecialchars($searchText) . "</b></h4></div></div>";*/
 
         $this->broadResultsHTML = $this->renderBroadResultsHTML();
+        // todo when the page first loads the results are blank, thus the page shows There are no results for that search.
+        // - When the page first loads there should be no message
+        // - check to see if it was submitted or not before rendering the message
         if ($this->broadResultsHTML == "") {
             $this->broadResultsHTML = "There are no results for that search.";
         }
