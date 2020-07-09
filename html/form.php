@@ -1,15 +1,16 @@
 <div class="row">
     <div class="col-9">
-        <p data-dSearchVersion="v9.9.9" class="text-muted-more">Dictionary <span id="dSearchVersion"></span></p>
+        <p data-dSearchVersion="v9.9.9" class="text-muted-more d-none">Dictionary <span id="dSearchVersion"></span></p>
         <nav>
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <a class="nav-item nav-link active" id="nav-search-tab" data-toggle="tab" href="#nav-search" role="tab"
-                   aria-controls="nav-search" aria-selected="true">Search</a>
+                <a class="nav-item nav-link active" id="nav-dictionary-tab" data-toggle="tab" href="#nav-dictionary"
+                   role="tab"
+                   aria-controls="nav-dictionary" aria-selected="true">Dictionary</a>
                 <a class="nav-item nav-link" id="nav-lists-tab" data-toggle="tab" href="#nav-lists" role="tab"
                    aria-controls="nav-lists" aria-selected="false">Select</a>
-                <a class="nav-item nav-link" id="nav-broad-search-tab" data-toggle="tab" href="#nav-broad-search"
+                <a class="nav-item nav-link" id="nav-occurrences-tab" data-toggle="tab" href="#nav-occurrences"
                    role="tab"
-                   aria-controls="nav-broad-search" aria-selected="false">Broad Search</a>
+                   aria-controls="nav-occurrences" aria-selected="false">Occurrences</a>
                 <?php if (REDCap::isLongitudinal()) { ?>
                     <a class="nav-item nav-link" id="nav-events-tab" data-toggle="tab" href="#nav-events" role="tab"
                        aria-controls="nav-events" aria-selected="false">Events</a>
@@ -18,10 +19,16 @@
         </nav>
 
         <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-search" role="tabpanel" aria-labelledby="nav-search-tab">
+            <div class="tab-pane fade show active" id="nav-dictionary" role="tabpanel"
+                 aria-labelledby="nav-dictionary-tab">
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <p><em>Search the data dictionary.</em></p>
+                    </div>
+                </div>
                 <div class="row mt-3">
                     <div class="col">
-                        <form name="dataDictionarySearch" class="form">
+                        <form name="dictionarySearch" class="form">
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <label for="searchString" class="input-group-text col-form-label font-weight-bolder"
@@ -243,7 +250,6 @@
                                     </div>
                                 </fieldset>
                             </div>
-                            <!-- <hr> Field Validation Options Coming Soon todo -->
                             <div class="field-validation-options d-none">
                                 <h5 class="font-weight-bolder">Validations</h5>
                                 <fieldset>
@@ -428,6 +434,11 @@
             </div>
             <div class="tab-pane fade" id="nav-lists" role="tabpanel" aria-labelledby="nav-lists-tab">
                 <div class="row mt-3">
+                    <div class="col-12">
+                        <p><em>Choose one of the options below and the results will automatically update</em></p>
+                    </div>
+                </div>
+                <div class="row mt-3">
                     <div class="col-6">
                         <label class="font-weight-bolder" for="instrument">Instrument</label>
                         <select class="custom-select" name="instrument" id="instrument"
@@ -502,45 +513,57 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="nav-broad-search" role="tabpanel"
-                 aria-labelledby="nav-broad-search-tab">
+            <div class="tab-pane fade" id="nav-occurrences" role="tabpanel"
+                 aria-labelledby="nav-occurrences-tab">
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <p>
+                            <em>Search Reports, Data Quality Rules, Alerts, Dashboards, Survey Settings, and Automated Survey Invitations.</em>
+                        </p>
+                    </div>
+                </div>
                 <div class="row mt-3">
                     <div class="col">
-                        <form name="broadSearchForm" class="form" method="post"
+                        <form name="occurrencesForm" class="form" method="post"
                               action="<?php echo $this->getUrl("index.php"); ?>">
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
-                                    <label for="broadSearchText"
+                                    <label for="occurrencesText"
                                            class="input-group-text col-form-label font-weight-bolder"
                                     >Search for:</label>
                                 </div>
-                                <input type="text" class="form-control" id="broadSearch" name="broadSearchText">
+                                <input type="text" class="form-control" id="occurrencesText" name="occurrencesText">
                                 <div class="input-group-append">
-                                    <input type="submit" class="btn btn-defaultrc" value="Search" name="broadSubmit">
+                                    <input type="submit" class="btn btn-defaultrc" value="Search"
+                                           name="occurrencesSubmit">
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
-                <div id="broadResults" style="padding:25px;"><?php echo $this->broadResultsHTML ?></div>
+                <div id="occurrencesResults" style="padding:25px;"><?php echo $this->occurrencesResultsHTML ?></div>
             </div>
             <div class="tab-pane fade" id="nav-events" role="tabpanel" aria-labelledby="nav-events-tab">
                 <div id="selections">
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <p>
+                                <em>Event Grids for easy reference. View events for a single instrument or view all insturments for a single event.</em>
+                            </p>
+                        </div>
+                    </div>
                     <div class="row  mt-3">
-                        <div class="col-4">
-                            <label class="font-weight-bolder" for="instrumentEvent">Select an Instrument</label>
+                        <div class="col-6">
+                            <label class="font-weight-bolder" for="instrumentEvent">Instruments</label>
                             <select class="custom-select" name="instrumentEvent" id="instrumentEvent"
                                     onchange="dSearch.renderEventsForInstrument(this.value);">
                             </select>
                         </div>
-                        <div class="col-4">
-                            <label class="font-weight-bolder" for="eventSelect">Select an Event</label>
+                        <div class="col-6">
+                            <label class="font-weight-bolder" for="eventSelect">Events</label>
                             <select class="custom-select" name="eventSelect" id="eventSelect"
-                                    onchange="dSearch.renderInstrumentsForEvent(this.value);">
+                                    onchange="dSearch.selectedEvent(this.value);">
                             </select>
-                        </div>
-                        <div class="col-3">
-                            <span id="designate_forms_url">Designate Forms Link</span>
                         </div>
                     </div>
                 </div>

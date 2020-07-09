@@ -12,16 +12,11 @@ dSearch.instrumentNames
 /*
 * todo:  parse out value labels
 *
-* todo: Does output need to be escaped? (looking for double quotes).
-*
 * todo: Ability to search by annotation?
 *
 * todo: simplify the dictionarySearch by removing blanks properties.
 *
-* todo: Field Names and Instrument Names do not have styling applied when they are found because they are proceesed into links to the data dictionary.
-*   -Is there a way to apply styling after applying the link
-*
-* todo: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  REcreate table.
+* todo: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  Recreate table.
 *
 * todo: include sample sample schemas
 * */
@@ -113,16 +108,19 @@ dSearch.initialize = function () {
 
     if (dSearch.isLongitudinal) {
         dSearch.eventListDiv = document.getElementById("eventList");
-        dSearch.InstrumentsForEventDiv = document.getElementById("formsForEvent");
+        dSearch.instrumentsForEventDiv = document.getElementById("formsForEvent");
         dSearch.eventTableByEventsDiv = document.getElementById("eventTableByEvent");
         dSearch.eventTableByInstrumentDiv = document.getElementById("eventTableByInstrument");
         dSearch.setEventTableByEvent();
         dSearch.setEventTableByInstrument();
         dSearch.eventTableByEventsDiv.innerHTML = dSearch.eventTableByEvent;
         dSearch.eventTableByInstrumentDiv.innerHTML = dSearch.eventTableByInstrument;
+
+
+        // Why does this break the loading? TODO  If placed outside of this it does work.
+        // dSearch.renderLinkToDesignateInstruments();
     }
 
-    dSearch.renderLinkToDesignateInstruments();
     if (dSearch.debugger) {
         document.getElementById("dSearchVersion").innerText = dSearch.version;
     }
@@ -297,10 +295,6 @@ dSearch.renderFieldMeta = function (fieldMeta) {
                 propertyValueHTML = dSearch.renderInstrumentName(fieldMeta.form_name);
             } else if (dSearch.searchCategories.includes(propertyName)) {
                 propertyValueHTML = dSearch.escapeHTML(propertyValue);
-                // todo how to change it to escaped HTML and yet still highlight the searched text in someway that does not
-                //   highlight the escaped html?  The code below used to work for giving the search text a format.
-                // original propertyValueHTML = propertyValue.split(regexSplit).join("<span class='dSearch-bolder'>" + dSearch.searchText + "</span>");
-                // this comes close to the original but and specific html character that as encoded will not be highlighted.
                 propertyValueHTML = propertyValueHTML.split(regexSplit).join("<span class='dSearch-bolder'>" + searchTextHTML + "</span>");
             } else {
                 propertyValueHTML = dSearch.escapeHTML(propertyValue);
@@ -538,10 +532,10 @@ dSearch.displayInstrumentEvents = function (instrumentName) {
     }
     let eventsCountLabel = (events.length > 1) ? events.length + " events" : " event";
     if (0 === events.length) {
-        eventsHTML = "There are no events for " + dSearch.instrumentNames.get(instrumentName);
+        eventsHTML = "<h3>There are no events for " + dSearch.instrumentNames.get(instrumentName) + "</h3>";
     } else {
-        eventsHTML = "<p><strong>" + dSearch.instrumentNames.get(instrumentName) +
-            " is available on the following " + eventsCountLabel + ":</strong></p>" +
+        eventsHTML = "<h3>" + dSearch.instrumentNames.get(instrumentName) +
+            " is available on the following " + eventsCountLabel + ":</h3>" +
             "<ul>";
         for (let i = 0; i < events.length; i++) {
             eventsHTML += "<li>";
@@ -777,6 +771,10 @@ dSearch.scrollToTop = function () {
     document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
 };
 
+dSearch.selectedEvent = function (eventNumber) {
+    let display = dSearch.renderInstrumentsForEvent(eventNumber);
+    dSearch.instrumentsForEventDiv.innerHTML = display;
+};
 
 dSearch.renderInstrumentsForEvent = function (eventNumber) {
     let instruments = dSearch.eventGrid[eventNumber];
@@ -793,19 +791,19 @@ dSearch.renderInstrumentsForEvent = function (eventNumber) {
         }
     }
     display += "</ul>";
-    dSearch.InstrumentsForEventDiv.innerHTML = display;
+    return display;
 };
 
 dSearch.renderEventsForInstrument = function (shortInstrumentName) {
     let display = dSearch.displayInstrumentEvents(shortInstrumentName);
-    dSearch.InstrumentsForEventDiv.innerHTML = display;
+    dSearch.instrumentsForEventDiv.innerHTML = display;
 };
 
 
 dSearch.setEventTableByEvent = function () {
-    let table = "<h3>Event Table <em>(Events are rows)</em></h3>" +
+    let table = "<h3>Events are rows</h3>" +
         "<table class='table table-bordered table-striped table-hover table-sm table-responsive event-table'>" +
-        "<tr class='table-warning'><th></th>";
+        "<tr class='table-warning'><th><span class=\"designate_forms_url\">Edit</span></th>";
     for (let [shortName, longName] of dSearch.instrumentNames) {
         table += "<th data-form-name='" + shortName + "'>" + longName + "</th>";
     }
@@ -833,9 +831,9 @@ dSearch.setEventTableByEvent = function () {
 };
 
 dSearch.setEventTableByInstrument = function () {
-    let table = "<h3>Event Table <em>(Instrument Names are rows)</em></h3>" +
+    let table = "<h3>Instrument Names are rows</h3>" +
         "<table class='table table-bordered table-striped table-hover table-sm table-responsive event-table'>" +
-        "<tr class='table-warning'><th></th>";
+        "<tr class='table-warning'><th><span class=\"designate_forms_url\">Edit</span></th>";
     for (let eventId in dSearch.eventGrid) {
         table += "<th>" + dSearch.getEventLabel(parseInt(eventId)) + "</th>";
     }
@@ -890,11 +888,6 @@ dSearch.displayCalcFields = function () {
     dSearch.renderSelectedResults(resultHTML);
 };
 
-// todo For In statements should be changes to regular for loops
-// https://stackoverflow.com/questions/1963102/what-does-the-jslint-error-body-of-a-for-in-should-be-wrapped-in-an-if-statemen
-
-// todo if no type is pass return all field names.
-
 dSearch.getFieldNamesByType = function (type) {
     if (!dSearch.fieldsByType[type]) {
         return;
@@ -920,8 +913,6 @@ dSearch.getFieldNamesByInstrument = function (instrumentName) {
     return fieldNames;
 };
 
-// TODO START WORK HERE TOMORROW.  DUPLICATING AND SIMPLIFYING FUNCTION AND FUNCTION CALLS BELOW.
-// todo GETTING AN undefined in the event list when playing around with the selections and validations
 dSearch.selectionController = function (property, value) {
     // todo check if valid properties and values are passed.
     if (property === "") {
@@ -1061,9 +1052,12 @@ dSearch.renderLinkToDesignateInstruments = function () {
     if (dSearch.canAccessDesigner) {
         display += "<a target=\"blank\" href=\"" +
             dSearch.designateFormsUrl +
-            "\">Designate My Events</a>";
+            "\">EditX</a>";
     }
-    document.getElementById("designate_forms_url").innerHTML = display;
+    let els = document.getElementsByClassName("designate_forms_url");
+    for (let i = 0; i < els.length; i++) {
+        els[i].innerHTML = display;
+    }
 };
 
 dSearch.escapeHTML = function escapeHtml(html) {

@@ -1,15 +1,16 @@
 <?php
 
 namespace DCC\DictionarySearch;
+// require_once "emLoggerTrait.php";
 
 use Exception;
 use ExternalModules\AbstractExternalModule;
 use \REDCap as REDCap;
 use \Security as Security;
 
-/** todo
+/** Ideas
  * Request for developers: Make an external module for looking up the history of fields.
- * When submitting an advanced search remember what the search text was and prefill the search field with it.
+ * When submitting an advanced search remember what the search text was and pre-fill the search field with it.
  **/
 
 /**
@@ -18,6 +19,7 @@ use \Security as Security;
  */
 class DictionarySearch extends AbstractExternalModule
 {
+//    use emLoggerTrait;
 
     /**
      * @var string[]
@@ -70,9 +72,9 @@ class DictionarySearch extends AbstractExternalModule
      */
     private $userRights;
     /**
-     * @var string if the broad search form was submitted; the returned results.  If not submitted zero length string.
+     * @var string if the occurrences form was submitted; the returned results.  If not submitted zero length string.
      */
-    private $broadResultsHTML;
+    private $occurrencesResultsHTML;
 
     public function __construct()
     {
@@ -105,10 +107,6 @@ class DictionarySearch extends AbstractExternalModule
         $this->instrumentNames = REDCap::getInstrumentNames();
         $rights = REDCap::getUserRights(USERID);
         $this->userRights = array_shift($rights);
-        /*        echo "<pre>";
-                print_r($this->userRights);
-                echo "x" . $this->userRights['reports'] . "x";
-                echo "</pre>";*/
 
         $this->canAccessDesigner();
 
@@ -123,13 +121,8 @@ class DictionarySearch extends AbstractExternalModule
         $searchInto  = "<div class='row'><div class='col'><h4>Search Results <b> " .
             htmlspecialchars($searchText) . "</b></h4></div></div>";*/
 
-        $this->broadResultsHTML = $this->renderBroadResultsHTML();
-        // todo when the page first loads the results are blank, thus the page shows There are no results for that search.
-        // - When the page first loads there should be no message
-        // - check to see if it was submitted or not before rendering the message
-        if ($this->broadResultsHTML == "") {
-            $this->broadResultsHTML = "There are no results for that search.";
-        }
+        $this->occurrencesResultsHTML = $this->renderOccurrencesResultsHTML();
+
         echo $this->getCSS();
         $this->renderForm();
 
@@ -137,8 +130,8 @@ class DictionarySearch extends AbstractExternalModule
             $this->setEventTable();
         }
         $this->activeTabId = "nav-search-tab";
-        if (isset($_POST['broadSubmit'])) {
-            $this->activeTabId = "nav-broad-search-tab";
+        if (isset($_POST['occurrencesSubmit'])) {
+            $this->activeTabId = "nav-occurrences-tab";
         }
 
         echo $this->renderScripts();
@@ -331,7 +324,7 @@ class DictionarySearch extends AbstractExternalModule
             $canAccessDesignerJS . PHP_EOL .
             $this->getIsLongitudinalJS() . PHP_EOL .
             $activeTabJS . PHP_EOL .
-            $this->renderBroadSearchResultsJSON() . PHP_EOL;
+            $this->renderOccurrencesSearchResultsJSON() . PHP_EOL;
         if (REDCap::isLongitudinal()) {
             $scripts .= $this->getEventGridJS($this->eventGrid) . PHP_EOL .
                 $this->getEventNamesJS() . PHP_EOL .
@@ -417,9 +410,6 @@ class DictionarySearch extends AbstractExternalModule
         return $this->eventGrid();
     }
 
-    // TODO the show/hide button is problematic if included here.  What happens if you don't want it.
-    //  Do you also include the js to hide/show?
-    // However it does the show hide works out well if it the project is not longitudinal.
     /**
      * Creates the eventTable that is visible on the page.
      */
@@ -500,7 +490,7 @@ class DictionarySearch extends AbstractExternalModule
     {
         global $project_id;
         $fuzzyText = "%" . $searchText . "%";
-        $html = "<div class='row'><div class='col'><h4 class='text-center'>Reports</h4>";
+        $html = "";
         $sql = 'SELECT ' .
             'report_id, ' .
             'title, ' .
@@ -536,7 +526,7 @@ class DictionarySearch extends AbstractExternalModule
     {
         global $project_id;
         $fuzzyText = "%" . $searchText . "%";
-        $html = "<div class='row'><div class='col'><h4 class='text-center'>Fields in Reports</h4>";
+        $html = "";
         $sql = 'SELECT ' .
             'redcap_reports.report_id, redcap_reports.title, redcap_reports_fields.field_name ' .
             'FROM ' .
@@ -555,7 +545,7 @@ class DictionarySearch extends AbstractExternalModule
     {
         global $project_id;
         $fuzzyText = "%" . $searchText . "%";
-        $html = "<div class='row'><div class='col'><h4 class='text-center'>Data Quality Rules</h4>";
+        $html = "";
 
         $sql = 'SELECT ' .
             'rule_id, rule_name, rule_logic ' .
@@ -574,7 +564,7 @@ class DictionarySearch extends AbstractExternalModule
     {
         global $project_id;
         $fuzzyText = "%" . $searchText . "%";
-        $html = "<div class='row'><div class='col'><h4 class='text-center'>Alerts</h4>";
+        $html = "";
 
         $sql = 'SELECT ' .
             'alert_id, alert_title, alert_condition, email_subject, alert_message ' .
@@ -603,7 +593,7 @@ class DictionarySearch extends AbstractExternalModule
     {
         global $project_id;
         $fuzzyText = "%" . $searchText . "%";
-        $html = "<div class='row'><div class='col'><h4 class='text-center'>Dashboards</h4>";
+        $html = "";
 
         $sql = 'SELECT ' .
             'rd_id, title, description, filter_logic, sort_field_name ' .
@@ -630,7 +620,7 @@ class DictionarySearch extends AbstractExternalModule
     {
         global $project_id;
         $fuzzyText = "%" . $searchText . "%";
-        $html = "<div class='row'><div class='col'><h4 class='text-center'>Survey Settings</h4>";
+        $html = "";
 
         $sql = 'SELECT ' .
             '`survey_id`, ' .
@@ -674,7 +664,7 @@ class DictionarySearch extends AbstractExternalModule
     {
         global $project_id;
         $fuzzyText = "%" . $searchText . "%";
-        $html = "<div class='row'><div class='col'><h4 class='text-center'>ASI</h4>";
+        $html = "";
 
         $sql = 'SELECT ' .
             'redcap_surveys_scheduler.survey_id, ' .
@@ -712,9 +702,9 @@ class DictionarySearch extends AbstractExternalModule
             $html .= "<p>Nothing was found.</p>";
         } else {
             if ($result->num_rows === 1) {
-                $html .= "<p>One result.</p>";
+                $html .= "<p>One occurrence.</p>";
             } else {
-                $html .= "<p>" . $result->num_rows . " results.</p>";
+                $html .= "<p>" . $result->num_rows . " occurrences.</p>";
             }
             while ($row = $result->fetch_assoc()) {
                 foreach ($row as $key => $value) {
@@ -729,7 +719,6 @@ class DictionarySearch extends AbstractExternalModule
                 $html .= "<hr>";
             }
         }
-        $html .= "</div></div>";
         return $html;
     }
 
@@ -743,33 +732,46 @@ class DictionarySearch extends AbstractExternalModule
         return $js;
     }
 
-    private function renderBroadResultsHTML()
+    private function renderOccurrencesResultsHTML()
     {
         $html = "";
-        if (isset($_POST['broadSubmit'])) {
-            $searchText = $_POST['broadSearchText'];
+        $sectionOpen = "<div class='row'><div class='col shadow p-3 mb-5 bg-white rounded'>";
+        $sectionClose = "</div></div>";
+        if (isset($_POST['occurrencesSubmit'])) {
+            $searchText = $_POST['occurrencesText'];
             if ($searchText !== "") {
 
                 if ($this->userRights['reports'] === "1") {
-                    $html .= $this->getSearchReportsResult($searchText);
-                    $html .= $this->getSearchReportFieldsResults($searchText);
+                    $html .= $sectionOpen . "<h4>Reports</h4>" .
+                        $this->getSearchReportsResult($searchText) . $sectionClose .
+                        $sectionOpen . "<h4>Fields in Reports</h4>" .
+                        $this->getSearchReportFieldsResults($searchText) . $sectionClose;
                 }
                 if ($this->userRights["data_quality_design"]) {
-                    $html .= $this->getSearchDQRules($searchText);
+                    $html .= $sectionOpen . "<h4>Data Quality Rules</h4>" .
+                        $this->getSearchDQRules($searchText) . $sectionClose;
                 }
                 if ($this->userRights["participants"]) {
-                    $html .= $this->getSearchAlertsResults($searchText);
-                    $html .= $this->getSearchDashboardResults($searchText);
-                    $html .= $this->getSearchSurveySettingsResults($searchText);
-                    $html .= $this->getSearchASIResults($searchText);
+                    $html .= $sectionOpen . "<h4>Alerts</h4>" .
+                        $this->getSearchAlertsResults($searchText) .
+                        $sectionClose .
+                        $sectionOpen . "<h4>Dashboards</h4>" .
+                        $this->getSearchDashboardResults($searchText) .
+                        $sectionClose .
+                        $sectionOpen . "<h4>Survey Settings</h4>" .
+                        $this->getSearchSurveySettingsResults($searchText) .
+                        $sectionClose .
+                        $sectionOpen . "<h4>ASI</h4>" .
+                        $this->getSearchASIResults($searchText) .
+                        $sectionClose;
                 }
             }
         }
         return $html;
     }
 
-    private function renderBroadSearchResultsJSON()
+    private function renderOccurrencesSearchResultsJSON()
     {
-        return "<script>broadResultsJSON = " . json_encode($this->broadResultsHTML) . "</script>";
+        return "<script>occurrencesResultsJSON = " . json_encode($this->occurrencesResultsHTML) . "</script>";
     }
 }

@@ -21,7 +21,7 @@
       "1.3.0": "Get a list of fields with a selected validation"
     },
     {
-      "1.4.0": "Search field name includes reports."
+      "1.4.0": "Reports, Data Quality Rules, Alerts, Dashboards, Survey Settings and Survey Invitations."
     }
   ],
   "permissions": [
@@ -39,8 +39,6 @@
     "control-center": [
     ]
   },
-  "no-auth-pages": [
-  ],
   "project-settings": [
   ],
   "system-settings": [
