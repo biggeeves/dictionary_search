@@ -1,7 +1,7 @@
 <?php
 
 namespace DCC\DictionarySearch;
-// require_once "emLoggerTrait.php";
+require_once "emLoggerTrait.php";
 
 use Exception;
 use ExternalModules\AbstractExternalModule;
@@ -19,7 +19,7 @@ use \Security as Security;
  */
 class DictionarySearch extends AbstractExternalModule
 {
-//    use emLoggerTrait;
+    use emLoggerTrait;
 
     /**
      * @var string[]

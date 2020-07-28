@@ -40,8 +40,20 @@
     ]
   },
   "project-settings": [
+    {
+      "key": "enable-project-debug-logging",
+      "name": "<b>Enable Stanford emLogger Logging</b><br>If you have the Stanford emLogger external module installed and configured, you can enable additional debug-level logging for this project",
+      "required": false,
+      "type": "checkbox"
+    }
   ],
   "system-settings": [
+    {
+      "key": "enable-system-debug-logging",
+      "name": "<b>Enable Debug Logging</b><br>If you have the Stanford emLogger external module installed and configured, you can enable additional debug-level logging through this checkbox.  Note that this will enable debugs for ALL Shazam projects.  You can alternatively enable it on a per-project basis by going that that project's Shazam EM configuration page",
+      "required": false,
+      "type": "checkbox"
+    }
   ],
   "crons": [
   ],
