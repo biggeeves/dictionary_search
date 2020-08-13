@@ -22,6 +22,9 @@
     },
     {
       "1.4.0": "Reports, Data Quality Rules, Alerts, Dashboards, Survey Settings and Survey Invitations."
+    },
+    {
+      "1.4.1": "ASI search results include instrument name and event."
     }
   ],
   "permissions": [

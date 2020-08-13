@@ -20,7 +20,7 @@ dSearch.instrumentNames
 * */
 
 dSearch.debugger = false;
-dSearch.version = "v1.3.0";
+dSearch.version = "v1.4.1";
 
 dSearch.initialize = function () {
     dSearch.dictionaryFields = [
