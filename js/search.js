@@ -12,8 +12,6 @@ dSearch.instrumentNames
 /*
 * todo:  parse out value labels
 *
-* todo: Ability to search by annotation?
-*
 * todo: simplify the dictionarySearch by removing blanks properties.
 *
 * todo: API token page has a nice Event table which has three columns: Unique Event Name, Event Name, Arm  Recreate table.
@@ -89,7 +87,7 @@ dSearch.initialize = function () {
     dSearch.feedbackDiv = document.getElementById("feedback");
     dSearch.scrollToTopBtn = document.getElementById("scrollToTop");
 
-    dSearch.searchCategories = [];
+    dSearch.searchMeta = [];
     dSearch.searchFieldTypes = [];
 
     dSearch.fieldValues = {};
@@ -115,10 +113,7 @@ dSearch.initialize = function () {
         dSearch.setEventTableByInstrument();
         dSearch.eventTableByEventsDiv.innerHTML = dSearch.eventTableByEvent;
         dSearch.eventTableByInstrumentDiv.innerHTML = dSearch.eventTableByInstrument;
-
-
-        // Why does this break the loading? TODO  If placed outside of this it does work.
-        // dSearch.renderLinkToDesignateInstruments();
+        dSearch.renderLinkToDesignateInstruments();
     }
 
     if (dSearch.debugger) {
@@ -135,11 +130,11 @@ dSearch.initialize = function () {
  * @returns {boolean}  true = matches any criteria specified.  false = does not match anything.
  */
 dSearch.matchCriteria = function (dictionaryRow) {
-    let meetsCriteria = false;
+    let isMatch = false;
 
-    let matchProperties = [];
-    dSearch.searchCategories.forEach(function (property) {
-        matchProperties[property] = false;
+    let meta = [];
+    dSearch.searchMeta.forEach(function (property) {
+        meta[property] = false;
     });
 
     if (!dSearch.searchFieldTypes.includes(dictionaryRow.field_type)) {
@@ -151,51 +146,52 @@ dSearch.matchCriteria = function (dictionaryRow) {
     }
 
 
-    for (let property of dSearch.searchCategories) {
+    for (let property of dSearch.searchMeta) {
 
-        let valueOfField = dictionaryRow[property].valueOf();
+        let metaValue = dictionaryRow[property].valueOf();
         /* Required fields, Identifiers, Matrix Ranking are included properties only when they are checked by the user
           Only then must they meet criteria below.  If the property is not included in Search Fields than the user
           did not check it and thus will be checked here for the value Y.
          */
 
-        if (property === "required_field" && valueOfField === "y") {
-            matchProperties[property] = true;
-        } else if (property === "identifier" && valueOfField === "y") {
-            matchProperties[property] = true;
-        } else if (property === "matrix_ranking" && valueOfField === "y") {
-            matchProperties[property] = true;
-        } /* TODO check if calculation type is checked allow zero length searches
-        else if (property === "calculates" && valueOfField === "y") {
-            matchProperties[property] = true;
-        }*/
+        if (property === "required_field" && metaValue === "y") {
+            meta[property] = true;
+        } else if (property === "identifier" && metaValue === "y") {
+            meta[property] = true;
+        } else if (property === "matrix_ranking" && metaValue === "y") {
+            meta[property] = true;
+        } else if (property === "select_choices_or_calculations" && metaValue === "y") {
+            meta[property] = true;
+        }
 
         if (dSearch.upperCase === 1) {
-            valueOfField = valueOfField.toUpperCase();
+            metaValue = metaValue.toUpperCase();
         }
 
         /* search for text if search string was submitted */
         if (dSearch.searchText.length > 0) {
             if (dSearch.fuzzy === 0) {
-                if (valueOfField === dSearch.searchText) {
-                    matchProperties[property] = true;
-                    meetsCriteria = true;
+                if (metaValue === dSearch.searchText) {
+                    meta[property] = true;
+                    isMatch = true;
                 }
             } else {
-                if (valueOfField.includes(dSearch.searchText)) {
-                    matchProperties[property] = true;
-                    meetsCriteria = true;
+                if (metaValue.includes(dSearch.searchText)) {
+                    meta[property] = true;
+                    isMatch = true;
                 }
             }
         }
     }
+    console.log(dictionaryRow.field_name);
+    console.log(meta);
     /* if the search string is zero than return true if the user searched for required, identifier, or matrix ranking
     * Example: Search for all required fields does not need search text.
     * */
     if (dSearch.searchText.length === 0) {
-        meetsCriteria = Object.values(matchProperties).some(Boolean);
+        isMatch = Object.values(meta).some(Boolean);
     }
-    return meetsCriteria;
+    return isMatch;
 };
 
 /**
@@ -216,7 +212,7 @@ dSearch.submitted = function () {
     Limit the number for fields searched to just the user selected fields.
      */
     dSearch.setSelectedCategories();
-    if (!Array.isArray(dSearch.searchCategories) || !dSearch.searchCategories.length) {
+    if (!Array.isArray(dSearch.searchMeta) || !dSearch.searchMeta.length) {
         dSearch.feedbackDiv.style.display = "block";
         dSearch.feedbackDiv.innerHTML = "Select a category to search";
         return;
@@ -276,7 +272,7 @@ dSearch.renderFieldMeta = function (fieldMeta) {
         let propertyName = properties[i][0];
         let propertyValue = properties[i][1];
         if (dSearch.limitToSelection === 1) {
-            if (dSearch.searchCategories.includes(propertyName) === false &&
+            if (dSearch.searchMeta.includes(propertyName) === false &&
                 propertyName !== "field_name" &&
                 propertyName !== "form_name") {
                 continue;
@@ -293,7 +289,7 @@ dSearch.renderFieldMeta = function (fieldMeta) {
                 propertyValueHTML = dSearch.renderFieldName(fieldMeta.field_name, fieldMeta.form_name);
             } else if (propertyName === "form_name") {
                 propertyValueHTML = dSearch.renderInstrumentName(fieldMeta.form_name);
-            } else if (dSearch.searchCategories.includes(propertyName)) {
+            } else if (dSearch.searchMeta.includes(propertyName)) {
                 propertyValueHTML = dSearch.escapeHTML(propertyValue);
                 propertyValueHTML = propertyValueHTML.split(regexSplit).join("<span class='dSearch-bolder'>" + searchTextHTML + "</span>");
             } else {
@@ -579,7 +575,7 @@ dSearch.debugDictionarySearch = function () {
     console.log("fuzzy=" + dSearch.fuzzy);
     console.log("limit to selection=" + dSearch.limitToSelection);
     console.log("The categories to search:");
-    console.log(dSearch.searchCategories);
+    console.log(dSearch.searchMeta);
     console.log("Field types to search:");
     console.log(dSearch.searchFieldTypes);
     console.log("Validations to search:");
@@ -626,7 +622,7 @@ dSearch.toUpper = function (item) {
 };
 
 /**
- * Sets array dSearch.searchCategories
+ * Sets array dSearch.searchMeta
  * an empty array value is OK.
  */
 dSearch.setSelectedCategories = function () {
@@ -635,7 +631,7 @@ dSearch.setSelectedCategories = function () {
         let element = document.getElementById(item);
         if (typeof (element) !== "undefined" && element !== null) {
             if (element.checked === true) {
-                dSearch.searchCategories.push(item);
+                dSearch.searchMeta.push(item);
             }
         }
     });
@@ -660,8 +656,8 @@ dSearch.setSearchFieldTypes = function () {
             }
         });
     }
-// FIXME: Not sure if searchCategories is used correctly.
-    if (!dSearch.searchCategories.length) {
+// FIXME: Not sure if searchMeta is used correctly.
+    if (!dSearch.searchMeta.length) {
         document.getElementById("all_field_types").checked = true;
         dSearch.searchFieldTypes = ["all_field_types"];
     }
@@ -1050,9 +1046,9 @@ dSearch.updateAllFieldValidations = function () {
 dSearch.renderLinkToDesignateInstruments = function () {
     let display = "";
     if (dSearch.canAccessDesigner) {
-        display += "<a target=\"blank\" href=\"" +
+        display += "<a href=\"" +
             dSearch.designateFormsUrl +
-            "\">EditX</a>";
+            "\">Edit</a>";
     }
     let els = document.getElementsByClassName("designate_forms_url");
     for (let i = 0; i < els.length; i++) {

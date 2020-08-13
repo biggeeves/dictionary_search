@@ -76,11 +76,6 @@ class DictionarySearch extends AbstractExternalModule
      */
     private $occurrencesResultsHTML;
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     /**
      * @param int $project_id Global Variable set by REDCap for Project ID.
      */
@@ -117,10 +112,6 @@ class DictionarySearch extends AbstractExternalModule
 
         $this->setEventGrid($project_id, array_keys($this->eventNames));
 
-        /* todo this fails because $searchText has not been defined yet.
-        $searchInto  = "<div class='row'><div class='col'><h4>Search Results <b> " .
-            htmlspecialchars($searchText) . "</b></h4></div></div>";*/
-
         $this->occurrencesResultsHTML = $this->renderOccurrencesResultsHTML();
 
         echo $this->getCSS();
@@ -142,7 +133,8 @@ class DictionarySearch extends AbstractExternalModule
     {
         global $draft_mode;  // 1=Draft Mode
         global $status;  // 0=Design Mode, 1=Production
-        $userRights = array_shift(REDCap::getUserRights(USERID));
+        $arrayUserRights = REDCap::getUserRights(USERID);
+        $userRights = array_shift($arrayUserRights);
 
         // No rights until proven.
         $this->canAccessDesigner = false;
@@ -378,8 +370,7 @@ class DictionarySearch extends AbstractExternalModule
     /**
      * @param $project_id
      * @param $eventIds array of project numeric event Ids
-     * @return |null
-     * @throws Exception
+     * @return null if not longitudinal
      */
     private function setEventGrid($project_id, $eventIds)
     {
@@ -391,9 +382,12 @@ class DictionarySearch extends AbstractExternalModule
 
         $this->eventGrid = [];
         $this->eventGridFlip = [];
-
         foreach ($eventIds as $eventId) {
-            $allFieldsByEvent = REDCap::getValidFieldsByEvents($project_id, $eventId);
+            try {
+                $allFieldsByEvent = REDCap::getValidFieldsByEvents($project_id, $eventId);
+            } catch (Exception $e) {
+                die ('Error: The project ID was not set yet the project is longitudinal.');
+            }
             foreach ($this->completedInstrumentVars as $shortName => $complete) {
                 $this->eventGrid[$eventId][$shortName] = false;
                 $this->eventGridFlip[$shortName][$eventId] = false;
@@ -667,11 +661,12 @@ class DictionarySearch extends AbstractExternalModule
         $html = "";
 
         $sql = 'SELECT ' .
-            'redcap_surveys_scheduler.survey_id, ' .
+            'redcap_surveys.form_name, ' .
+            'redcap_surveys.title, ' .
+            'redcap_surveys_scheduler.event_id, ' .
             'redcap_surveys_scheduler.email_subject, ' .
             'redcap_surveys_scheduler.email_content,  ' .
-            'redcap_surveys_scheduler.condition_logic, ' .
-            'redcap_surveys.title ' .
+            'redcap_surveys_scheduler.condition_logic ' .
             'FROM ' .
             'redcap_surveys_scheduler ' .
             'INNER JOIN ' .
@@ -709,11 +704,24 @@ class DictionarySearch extends AbstractExternalModule
             while ($row = $result->fetch_assoc()) {
                 foreach ($row as $key => $value) {
                     if (!is_null($value)) {
-                        $html .= "<strong>" .
-                            ucfirst(str_replace("_", " ", $key)) .
-                            "</strong>: " .
-                            htmlspecialchars($value) .
-                            "<br>";
+                        $html .= "<strong>";
+                        if ($key === 'form_name') {
+                            $html .= 'Instrument';
+                        } else if ($key === 'event_id') {
+                            $html .= 'Event';
+                        } else {
+                            $html .= ucfirst(str_replace("_", " ", $key));
+                        }
+                        $html .= "</strong>: ";
+                        if ($key === 'form_name') {
+                            $html .= $this->instrumentNames[$value];
+                        } else if ($key === 'event_id') {
+                            $html .= REDCap:: getEventNames(false, false, $value);
+                        } else {
+                            $html .= htmlspecialchars($value);
+
+                        }
+                        $html .= "<br>";
                     }
                 }
                 $html .= "<hr>";
@@ -735,11 +743,15 @@ class DictionarySearch extends AbstractExternalModule
     private function renderOccurrencesResultsHTML()
     {
         $html = "";
-        $sectionOpen = "<div class='row'><div class='col shadow p-3 mb-5 bg-white rounded'>";
+
+
+        $sectionOpen = "<div class='row'><div class='col shadow p-3 mb-5 rounded'>";
         $sectionClose = "</div></div>";
         if (isset($_POST['occurrencesSubmit'])) {
             $searchText = $_POST['occurrencesText'];
             if ($searchText !== "") {
+                $html .= "<div class='row'><div class='col'><h4>Search Results for: <b> " .
+                    htmlspecialchars($searchText) . "</b></h4></div></div>";
 
                 if ($this->userRights['reports'] === "1") {
                     $html .= $sectionOpen . "<h4>Reports</h4>" .
@@ -765,7 +777,12 @@ class DictionarySearch extends AbstractExternalModule
                         $this->getSearchASIResults($searchText) .
                         $sectionClose;
                 }
+            } else {
+                $html .= "<div class='row'><div class='col'>" .
+                    "<h4>It is not possible to search for blanks or zero length strings." .
+                    "</h4></div></div>";
             }
+
         }
         return $html;
     }

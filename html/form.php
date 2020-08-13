@@ -42,15 +42,15 @@
                                     </button>
                                 </div>
                             </div>
-                            <h5 class="font-weight-bolder">Field Properties</h5>
+                            <h5 class="font-weight-bolder">Field Meta</h5>
                             <fieldset>
                                 <div class="row">
                                     <div class="col">
                                         <div class="form-check">
-                                            <input class="form-check-input" name="all_categories" id="all_categories"
+                                            <input class="form-check-input" name="all_meta" id="all_meta"
                                                    type="checkbox"
                                                    onchange="dSearch.toggleAllCategories()">
-                                            <label class="form-check-label" id="form-check-label" for="all_categories"
+                                            <label class="form-check-label" id="form-check-label" for="all_meta"
                                                    data-toggle="tooltip"
                                                    title="All categories will be searched.  The check marks will remain the same so you can go back to a previous selection.">Check All</label>
                                         </div>
