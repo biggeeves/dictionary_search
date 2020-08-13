@@ -1,8 +1,8 @@
 # DictionarySearch
-<h3>Search the Data Dictionary</h3>
-<h2>Create reports using the data dictionary.<br>View the Event Grid.</h2>
+<h3>Search Data Dictionaries, ASIs, Survey Settings, Reports, Data Qualities, Alerts and Dashboards.  View the Event Grid.  Designed to easily find text and variable references throughout a project.</h3>
+<h2>Display results in easy to use, easy to copy and share formats.</h2>
 
-<h4>Consolidated code book information.</h4>
+<h3>Consolidated code book information.</h3>
 <p><em>Example:</em>  get a short report on every variable that uses a date format "DMY".</p> 
 
 <p>Search a single category like Field Name or search multiple categories at the same time.</p>
@@ -32,6 +32,10 @@ pertains to whether or not the case is strict or not.
 
 <h4>Select a Field:</h4>
 <p>Choose one field from the select instrument to display.</p>
+
+<h3>Find occurrences of text/variables throughout a project.</h3>
+<p><em>Example:</em> Search for a variable in a project and any location with that text in Reports, ASIs, Survey Settings, Dashboards, Data Quality Rules, Alerts will be displayed.</p> 
+
 
 <h3>Events</h3>
 <p>The event grid is displayed two ways Instruments in rows and instruments in columns</p>

@@ -1,7 +1,7 @@
 {
   "name": "Dictionary Search",
   "namespace": "DCC\\DictionarySearch",
-  "description": "Robust Search for the Data Dictionary.  Find specific text and add qualifiers like the field must be a required field.  Get a list of all identifier fields across all instruments.  View the event grid. Search skip patterns, etc!",
+  "description": "Search Data Dictionaries, ASIs, Survey Settings, Reports, Data Qualities, Alerts and Dashboards.  View the Event Grid.  Designed to easily find text and variable references throughout a project.",
   "documentation": "README.md",
   "authors": [
     {
