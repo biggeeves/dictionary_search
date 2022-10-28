@@ -25,6 +25,9 @@
     },
     {
       "1.4.1": "ASI search results include instrument name and event."
+    },
+    {
+      "1.5": "Max supported PHP version 7.6"
     }
   ],
   "permissions": [
