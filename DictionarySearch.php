@@ -250,7 +250,7 @@ class DictionarySearch extends AbstractExternalModule
             $searchText = $_POST['occurrencesText'];
             if ($searchText !== "") {
                 $html .= "<div class='row'><div class='col'><h4>Search Results for: <b> " .
-                    htmlspecialchars($searchText) . "</b></h4></div></div>";
+                    htmlspecialchars($searchText, ENT_QUOTES) . "</b></h4></div></div>";
 
                 if ($this->userRights['reports'] === "1") {
                     $html .= $sectionOpen . "<h4>Reports</h4>" .
@@ -358,7 +358,7 @@ class DictionarySearch extends AbstractExternalModule
                         } else if ($key === 'event_id') {
                             $html .= REDCap:: getEventNames(false, false, $value);
                         } else {
-                            $html .= htmlspecialchars($value);
+                            $html .= htmlspecialchars($value, ENT_QUOTES);
 
                         }
                         $html .= "<br>";
