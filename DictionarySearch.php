@@ -174,20 +174,28 @@ class DictionarySearch extends AbstractExternalModule
 
     }
 
-    /**
-     * Set eventNames using REDCap method.
-     */
-    private function setEventNames(): void
-    {
-        $this->eventNames = REDCap::getEventNames(true, false);
-    }
+	/**
+	 * Set eventNames using REDCap method.
+	 */
+	private function setEventNames(): void
+	{
+		$eventNames = REDCap::getEventNames(true, false);
+		if ($eventNames === false) {
+			$eventNames = []; // Set to an empty array if false is returned
+		}
+		$this->eventNames = $eventNames;
+	}
 
     /**
      * Set eventLabels using REDCap method.
      */
     private function setEventNameLabels(): void
     {
-        $this->eventLabels = REDCap::getEventNames(false, false);
+        $eventLabels = REDCap::getEventNames(false, false);
+		if ($eventLabels === false) {
+			$eventLabels = []; // Set to an empty array if false is returned
+		}
+		$this->eventLabels = $eventLabels;
     }
 
     /**
